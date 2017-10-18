@@ -1,2 +1,6 @@
 sat
 *.o
+
+#clion stuff
+cmake-build-debug/**
+.idea/**
