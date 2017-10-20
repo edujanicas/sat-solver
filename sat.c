@@ -3,6 +3,7 @@
 
 #include "queue.h"
 #include "vector.h"
+#include "var.h"
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -77,6 +78,17 @@ int main(int argc, char **argv) {
     printf("\n");
 
     VECTORfree(&v);
+
+    printf("--------------------VARS---------------\n");
+    Var var = VARinit(5, false);
+    printf("Var id: %d\n", var->id);
+    printf("Var value: %d\n", var->value);
+    printf("Var sign: %d\n", var->sign);
+
+    printf("VARisAssigned: %d\n", VARisAssigned(var));
+    var->value = true;
+    printf("VARisAssigned: %d\n", VARisAssigned(var));
+    printf("VARgetValue: %d\n", VARgetValue(var));
 
     // End of Heap and Queue testing -----------------------------
 
