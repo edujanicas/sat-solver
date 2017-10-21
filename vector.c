@@ -1,7 +1,7 @@
 #include "vector.h"
 
-void VECTORinit(V v)
-{
+V VECTORinit() {
+    V v = (V) malloc(sizeof(struct vector));
     v->capacity = VECTOR_INIT_CAPACITY;
     v->total = 0;
     v->items = malloc(sizeof(void *) * v->capacity);

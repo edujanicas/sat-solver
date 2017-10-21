@@ -13,7 +13,7 @@ typedef struct vector {
     int total;
 } vector;
 
-void VECTORinit(V);
+V VECTORinit();
 int VECTORtotal(V);
 static void VECTORresize(V, int);
 void VECTORadd(V, void *);
