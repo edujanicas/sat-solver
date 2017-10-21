@@ -5,6 +5,9 @@
 #include <stdlib.h>
 
 #define VECTOR_INIT_CAPACITY 100
+#define VECTOR_CAPACITY_INCREASE_FACTOR 2
+#define VECTOR_CAPACITY_DECREASE_FACTOR 2
+#define VECTOR_CAPACITY_DECREASE_THRESHOLD 4
 
 typedef struct vector *V;
 typedef struct vector {

@@ -1,6 +1,6 @@
 #include "queue.h"
 
-QUEUElink NEWQUEUE(void* item, QUEUElink next)
+QUEUElink QUEUEnewElement(void *item, QUEUElink next)
 {
     QUEUElink x = (QUEUElink)malloc(sizeof(struct QUEUEnode));
     x->item = item;
@@ -26,11 +26,11 @@ void QUEUEinsert(Q q, void* item)
 {
     q->size += 1;
     if (q->head == NULL) {
-        q->tail = NEWQUEUE(item, q->head);
+        q->tail = QUEUEnewElement(item, q->head);
         q->head = q->tail;
         return;
     }
-    q->tail->next = NEWQUEUE(item, q->tail->next);
+    q->tail->next = QUEUEnewElement(item, q->tail->next);
     q->tail = q->tail->next;
 }
 

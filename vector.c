@@ -24,7 +24,7 @@ static void VECTORresize(V v, int capacity)
 void VECTORadd(V v, void *item)
 {
     if (v->capacity == v->total)
-        VECTORresize(v, v->capacity * 2);
+        VECTORresize(v, v->capacity * VECTOR_CAPACITY_INCREASE_FACTOR);
     v->items[v->total++] = item;
 }
 
@@ -55,8 +55,8 @@ void VECTORdelete(V v, int index)
 
     v->total--;
 
-    if (v->total > 0 && v->total == v->capacity / 4)
-        VECTORresize(v, v->capacity / 2);
+    if (v->total > 0 && v->total == v->capacity / VECTOR_CAPACITY_DECREASE_THRESHOLD)
+        VECTORresize(v, v->capacity / VECTOR_CAPACITY_DECREASE_THRESHOLD);
 }
 
 void VECTORpop(V v)
