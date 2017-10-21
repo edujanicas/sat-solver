@@ -2,10 +2,26 @@
 #include <errno.h>
 #include "vector.h"
 #include "vector.c"
+#include "var.h"
 
 int MAX_NUMBER_LENGTH = 10;
 char *MAX_NUMBER_LENGTH_C = "10";
 
+void printDebugOutput(V output) {
+    int i, j;
+    printf("Parsed %d clauses\n", VECTORtotal(output));
+    for (i = 0; i < VECTORtotal(output); i++) {
+        printf("Clause %d:\n\t", i);
+        V clause = VECTORget(output, i);
+        for (j = 0; j < VECTORtotal(clause); j++) {
+            Var var = VECTORget(clause, j);
+            if (!var->sign)
+                printf("-");
+            printf("%d ", var->id);
+        }
+        printf("\n");
+    }
+}
 
 void badFormatted(char *message, char *details) {
     printf("ERROR: the file is badly formatted. %s %s\n", message, details);
@@ -70,16 +86,18 @@ int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
 V parse(char *path) {
     int i;
 
-    V outputVector;
+    V output = VECTORinit();
 
-    V tempClauseVector = VECTORinit();
+    V tempClause;
+
+    Var tempVar;
 
     FILE *inputFile;
 
     int numberOfLits, numberOfClauses;
     int lastReadChar;
 
-    int readLit;
+    int readInt;
 
     inputFile = fopen(path, "r");
 
@@ -98,18 +116,41 @@ V parse(char *path) {
         badFormatted("Could not find number of clauses parameter", "");
 
     for (i = 0; i < numberOfClauses; i++) {
-        tempClauseVector = VECTORinit();
+        tempClause = VECTORinit();
         do {
-            readLit = readNumberUntilSpace(inputFile, &lastReadChar);
-            if (readLit < 0 || readLit > numberOfLits) {
-                badFormatted("Bad formatted literal: ", "");
+            readInt = readNumberUntilSpace(inputFile, &lastReadChar);
+            printf("read %d, ", readInt);
+            if (abs(readInt) < 0 || abs(readInt) > numberOfLits) {
+                badFormatted("not a valid literal", "");
             }
-            if (readLit != 0) {
+            if (readInt != 0) {
+                tempVar = VARinit((unsigned int) abs(readInt), readInt > 0);
+                VECTORadd(tempClause, tempVar);
+                printf("added\n");
+            }
 
+            if (!isSeparator(lastReadChar))
+                badFormatted("", "");
+            if (lastReadChar == EOF) {
+                if (i < numberOfClauses - 1) {
+                    badFormatted("Could not find enough clauses", "");
+                } else {
+                    break;
+                }
             }
-        } while (readLit != 0);
+
+        } while (readInt != 0);
+
+        printf("adding clause\n");
+        VECTORadd(output, tempClause);
     }
+    if (lastReadChar != EOF)
+        printf("WARNING: Heading indicated %d clauses, they have been parsed correctly. EOF not reached.\n",
+               numberOfClauses);
+    printDebugOutput(output);
 }
+
+//uncomment for testing purposes
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
