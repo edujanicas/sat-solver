@@ -5,6 +5,7 @@ V VECTORinit() {
     v->capacity = VECTOR_INIT_CAPACITY;
     v->total = 0;
     v->items = malloc(sizeof(void *) * v->capacity);
+    return v;
 }
 
 int VECTORtotal(V v)
@@ -12,7 +13,7 @@ int VECTORtotal(V v)
     return v->total;
 }
 
-static void VECTORresize(V v, int capacity)
+void VECTORresize(V v, int capacity)
 {
     void **items = realloc(v->items, sizeof(void *) * capacity);
     if (items) {

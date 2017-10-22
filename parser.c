@@ -1,11 +1,4 @@
-#include <ctype.h>
-#include <errno.h>
-#include "vector.h"
-#include "vector.c"
-#include "var.h"
-
-int MAX_NUMBER_LENGTH = 10;
-char *MAX_NUMBER_LENGTH_C = "10";
+#include "parser.h"
 
 void printDebugOutput(V output) {
     int i, j;
@@ -148,16 +141,18 @@ V parse(char *path) {
         printf("WARNING: Heading indicated %d clauses, they have been parsed correctly. EOF not reached.\n",
                numberOfClauses);
     printDebugOutput(output);
+
+    return output;
 }
 
 //uncomment for testing purposes
-
-int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        printf("Please run with exactly one argument\n");
-        exit(EXIT_FAILURE);
-    }
-
-    printf("parsing file%s\n", argv[1]);
-    parse(argv[1]);
-}
+//
+//int main(int argc, char *argv[]) {
+//    if (argc != 2) {
+//        printf("Please run with exactly one argument\n");
+//        exit(EXIT_FAILURE);
+//    }
+//
+//    printf("parsing file%s\n", argv[1]);
+//    parse(argv[1]);
+//}
