@@ -7,14 +7,17 @@
 #include "var.h"
 
 int conflict(V formula) {
+    // VERY DUMB SOLVER. IT MAY HAVE DIFERENT VARIABLES WITH THE SAME ID AND DIFERENT VALUES
     for (int i = 0; i < VECTORtotal(formula); i++) {
         for (int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++) {
             Var current = ((Var)VECTORget(VECTORget(formula, i), j));
-            if(current->value != 2) {
+            if(current->value != unassigned) {
                 for (int k = i; k < VECTORtotal(formula); k++) {
-                    for (int l = j; l < VECTORtotal(VECTORget(formula, k)); l++){ 
+                    for (int l = j; l < VECTORtotal(VECTORget(formula, k)); l++){
                         Var cmp = ((Var)VECTORget(VECTORget(formula, k), l));
-                        if(current->value == cmp->value) {
+                        if(cmp->value != unassigned &&
+                            current->id == cmp->id &&
+                            current->value != cmp->value) {
                             return true;
                         }
                     }
@@ -22,26 +25,52 @@ int conflict(V formula) {
             }
         }
     }
+    // CHECK IF THERE ARE NO ALL FALSE OR clauses
+    for (int i = 0; i < VECTORtotal(formula); i++) {
+        int value = false;
+        for (int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++) {
+            Var current = ((Var)VECTORget(VECTORget(formula, i), j));
+            if(current -> value == unassigned || VARgetValue(current)==true) {
+              value = true;
+            }
+        }
+        if(value==false) return true;
+    }
     return false;
 }
 
 int allVarsAssigned(V formula) {
-    return false;
+    for (int i = 0; i < VECTORtotal(formula); i++) {
+        for (int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++) {
+            if (((Var)VECTORget(VECTORget(formula, i), j))->value == unassigned) return false;
+        }
+    }
+    return true;
 }
-int topLevelConflict(V formula) {
-    return 0;
-}
+
 Var decide(V formula) {
+    for (int i = 0; i < VECTORtotal(formula); i++) {
+        for (int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++) {
+            Var var = (Var)VECTORget(VECTORget(formula, i), j);
+            if (var->value == unassigned){
+                var->value = true;
+                return var;
+            }
+        }
+    }
     return NULL;
 }
 void change_decision(Var assigned) {
-
+    if(assigned->value == true)
+        assigned->value = false;
+    else
+        assigned->value = true;
 }
 V propagate(V formula) {
     return formula;
 }
 
-int dpll(V formula) {
+int solve(V formula) {
     V new_formula = propagate(formula);
     if(!conflict(new_formula) && allVarsAssigned(new_formula)) {
         return true;
@@ -49,11 +78,11 @@ int dpll(V formula) {
         return false;
     }
     Var assigned = decide(new_formula);
-    if(dpll(new_formula)) {
+    if(solve(new_formula)) {
         return true;
     } else {
         change_decision(assigned);
-        return dpll(new_formula);
+        return solve(new_formula);
     }
 }
 
@@ -64,14 +93,6 @@ int main(int argc, char **argv) {
     }
     V cnf = parse(argv[1]);
 
-    printf("%d ",((Var)VECTORget(VECTORget(cnf, 0), 0))->id);
-    printf("%d\n",((Var)VECTORget(VECTORget(cnf, 0), 0))->value);
-    printf("%d ",((Var)VECTORget(VECTORget(cnf, 0), 1))->id);
-    printf("%d\n",((Var)VECTORget(VECTORget(cnf, 0), 1))->value);
-    printf("%d ",((Var)VECTORget(VECTORget(cnf, 1), 0))->id);
-    printf("%d\n",((Var)VECTORget(VECTORget(cnf, 1), 0))->value);
-    printf("%d ",((Var)VECTORget(VECTORget(cnf, 1), 1))->id);
-    printf("%d\n",((Var)VECTORget(VECTORget(cnf, 1), 1))->value);
 
     // while(true) {
     //     propagate(); // propagate unit clauses
@@ -93,7 +114,25 @@ int main(int argc, char **argv) {
     //     }
     // }
     printf("Conflict? %d\n", conflict(cnf));
-    printf("UNSAT\n");
+    printf("All vars assigned? %d\n", allVarsAssigned(cnf));
+
+    printf("Runing dpll...\n");
+    int result = solve(cnf);
+
+    //printf("%d ",((Var)VECTORget(VECTORget(cnf, 0), 0))->id);
+    //printf("%d\n",((Var)VECTORget(VECTORget(cnf, 0), 0))->value);
+    //printf("%d ",((Var)VECTORget(VECTORget(cnf, 1), 0))->id);
+    //printf("%d\n",((Var)VECTORget(VECTORget(cnf, 1), 0))->value);
+
+    printf("Conflict? %d\n", conflict(cnf));
+    printf("All vars assigned? %d\n", allVarsAssigned(cnf));
+
+    if(result == true) {
+      printf("SAT\n");
+
+    } else {
+      printf("UNSAT\n");
+    }
 
     exit(EXIT_SUCCESS);
 }
