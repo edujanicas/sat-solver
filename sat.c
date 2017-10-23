@@ -37,8 +37,57 @@ Var decide(V formula) {
 void change_decision(Var assigned) {
 
 }
+
+// TODO: Move me somewhere appropriate
+// TODO: Remove variable when appropriate
+void check_vars_in_clause(V clause, V unit_vars) {
+    for (int i = 0; i < VECTORtotal(clause); ++i) {
+        Var current_var = VECTORget(clause, i);
+
+        for (int j = 0; j < VECTORtotal(unit_vars); ++j) {
+            Var unit_var = VECTORget(clause, j);
+
+            if (current_var->id == unit_var->id) {
+                current_var->value = unit_var->sign;
+            }
+        }
+    }
+}
+
+// TODO: Copy clauses to result
 V propagate(V formula) {
-    return formula;
+    // Create simplified formula
+    V result = VECTORinit();
+
+    // Store variables appearing in unit clauses
+    V unit_vars = VECTORinit();
+
+    for (int i = 0; i < VECTORtotal(formula); ++i) {
+        V clause = VECTORget(formula, i);
+
+        if (VECTORtotal(clause) == 1) {
+            printf("%d: size 1\n", i);
+
+            Var unit_var = VECTORget(clause, 0);
+            VECTORadd(unit_vars, unit_var);
+        }
+        else {
+            printf("%d: size %d\n", i, VECTORtotal(clause));
+
+            VECTORadd(result, clause);
+        }
+    }
+
+    // Propagate units
+    for (int i = 0; i < VECTORtotal(result); ++i) {
+        V clause = VECTORget(result, i);
+
+        for (int j = 0; j < VECTORtotal(clause); ++j) {
+            check_vars_in_clause(clause, unit_vars);
+        }
+    }
+
+    return result;
 }
 
 int dpll(V formula) {
