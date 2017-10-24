@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "parser.h"
-#include "queue.h"
 #include "vector.h"
 #include "var.h"
+#include "parser.h"
+
 
 int conflict(V formula) {
     // VERY DUMB SOLVER. IT MAY HAVE DIFERENT VARIABLES WITH THE SAME ID AND DIFERENT VALUES
@@ -141,7 +140,6 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     V cnf = parse(argv[1]);
-
 
     // while(true) {
     //     propagate(); // propagate unit clauses

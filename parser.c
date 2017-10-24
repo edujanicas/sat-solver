@@ -1,23 +1,25 @@
 #include "parser.h"
+#include "debugPrinter.h"
 
-void printDebugOutput(V output) {
+void printOutput(V output) {
     int i, j;
-    printf("Parsed %d clauses\n", VECTORtotal(output));
+    printDebugInt("Number of parsed clauses: ", VECTORtotal(output));
     for (i = 0; i < VECTORtotal(output); i++) {
-        printf("Clause %d:\n\t", i);
+        printDebugInt("Clause", i);
         V clause = VECTORget(output, i);
         for (j = 0; j < VECTORtotal(clause); j++) {
             Var var = VECTORget(clause, j);
             if (!var->sign)
-                printf("-");
-            printf("%d ", var->id);
+                printDebugInt("-", var->id);
+            else
+                printDebugInt("", var->id);
         }
-        printf("\n");
+        printDebug("\n");
     }
 }
 
 void badFormatted(char *message, char *details) {
-    printf("ERROR: the file is badly formatted. %s %s\n", message, details);
+    printf("ERROR: the file is badly formatted. %s%s<\n", message, details);
     exit(EXIT_FAILURE);
 }
 
@@ -33,28 +35,49 @@ int isSeparator(int character) {
     return 0;
 }
 
-void checkStartSequence(FILE *inputFile) {
-    char *FILE_START = "p cnf ";
-
+void skipLine(FILE *inputFile) {
     int readChar;
-
-    for (; *FILE_START; FILE_START++) {
-        readChar = fgetc(inputFile);
-        if (readChar != (int) *FILE_START)
-            badFormatted("File must start with\n", FILE_START);
-    }
-}
-
-int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
-    int readNumber;
-    int readChar;
-    int i = 0;
-    char *readNumberChars = malloc(MAX_NUMBER_LENGTH * sizeof(char));
-
-    i = 0;
     do {
         readChar = fgetc(inputFile);
-        *(readNumberChars + i) = (char) readChar;
+    } while (readChar != '\n' && readChar != EOF);
+    printDebug("Skipped a comment\n");
+}
+
+void checkStartSequence(FILE *inputFile) {
+    char *fileStart = "p cnf ";
+    int readChar;
+
+    do {
+        readChar = fgetc(inputFile);
+        if (readChar == (int) *fileStart) {
+            fileStart++;
+        } else {
+            if (readChar == 'c') {
+                readChar = fgetc(inputFile);
+                if (readChar == ' ') {
+                    skipLine(inputFile);
+                    fileStart = "p cnf ";
+                    continue;
+                } else {
+                    badFormatted("The file must start with", "p cnf ");
+                }
+            } else {
+                badFormatted("The file must start with", "p cnf ");
+            }
+        }
+    } while (*fileStart);
+
+}
+
+void readUntilSpace(FILE *inputFile, int *lastReadChar, char *readNumberChars) {
+    int i = 0;
+    int readChar;
+    do {
+        readChar = fgetc(inputFile);
+        if (readChar == 'c')
+            skipLine(inputFile);
+        else
+            *(readNumberChars + i) = (char) readChar;
         i++;
     } while (i < MAX_NUMBER_LENGTH && !isSeparator(readChar));
 
@@ -62,6 +85,13 @@ int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
         badFormatted("This parser only accepts numbers of length in characters up to: ", MAX_NUMBER_LENGTH_C);
 
     *lastReadChar = readChar;
+}
+
+int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
+    int readNumber;
+    char *readNumberChars = malloc(MAX_NUMBER_LENGTH * sizeof(char));
+
+    readUntilSpace(inputFile, lastReadChar, readNumberChars);
 
     readNumber = strtol(readNumberChars, NULL, 0);
 
@@ -70,61 +100,36 @@ int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
      *    strtol did not attempt (this would not trigger a strtol fail)
      * */
     if (readNumber == 0 && (errno == EINVAL || errno == ERANGE || !isdigit(readNumberChars[0])))
-        badFormatted("", "");
+        badFormatted("Expected a number, read: ", readNumberChars);
 
     return readNumber;
 }
 
-
-V parse(char *path) {
+void makeOutput(FILE *inputFile, V output, int numberOfClauses, int numberOfLits) {
     int i;
-
-    V output = VECTORinit();
-
     V tempClause;
-
     Var tempVar;
-
-    FILE *inputFile;
-
-    int numberOfLits, numberOfClauses;
-    int lastReadChar;
-
+    int lastReadChar = 0;
     int readInt;
-
-    inputFile = fopen(path, "r");
-
-    checkStartSequence(inputFile);
-
-    numberOfLits = readNumberUntilSpace(inputFile, &lastReadChar);
-    if (!isSeparator(lastReadChar))
-        badFormatted("", "");
-    if (lastReadChar == EOF)
-        badFormatted("Could not find number of clauses parameter", "");
-
-    numberOfClauses = readNumberUntilSpace(inputFile, &lastReadChar);
-    if (!isSeparator(lastReadChar))
-        badFormatted("", "");
-    if (lastReadChar == EOF)
-        badFormatted("Could not find number of clauses parameter", "");
 
     for (i = 0; i < numberOfClauses; i++) {
         tempClause = VECTORinit();
         do {
             readInt = readNumberUntilSpace(inputFile, &lastReadChar);
-            printf("read %d, ", readInt);
+            printDebugInt("read  ", readInt);
             if (abs(readInt) < 0 || abs(readInt) > numberOfLits) {
                 badFormatted("not a valid literal", "");
             }
+
             if (readInt != 0) {
                 tempVar = VARinit((unsigned int) abs(readInt), readInt > 0);
                 VECTORadd(tempClause, tempVar);
-                printf("added\n");
+                printDebug("added\n");
             }
 
-            if (!isSeparator(lastReadChar))
+            if (!isSeparator(lastReadChar)) {
                 badFormatted("", "");
-            if (lastReadChar == EOF) {
+            } else if (lastReadChar == EOF) {
                 if (i < numberOfClauses - 1) {
                     badFormatted("Could not find enough clauses", "");
                 } else {
@@ -133,14 +138,44 @@ V parse(char *path) {
             }
 
         } while (readInt != 0);
-
-        printf("adding clause\n");
+        printDebug("adding clause\n");
         VECTORadd(output, tempClause);
+
     }
+
     if (lastReadChar != EOF)
-        printf("WARNING: Heading indicated %d clauses, they have been parsed correctly. EOF not reached.\n",
-               numberOfClauses);
-    printDebugOutput(output);
+        printDebugInt("WARNING: Heading indicated %d clauses, they have been parsed correctly. EOF not reached.\n",
+                      numberOfClauses);
+}
+
+int readHeaderParameter(FILE *inputFile) {
+    int lastReadChar;
+    int parameter = readNumberUntilSpace(inputFile, &lastReadChar);
+    if (!isSeparator(lastReadChar))
+        badFormatted("", "");
+    else if (lastReadChar == EOF)
+        badFormatted("Could not find number of clauses parameter", "");
+    return parameter;
+}
+
+V parse(char *path) {
+    V output = VECTORinit();
+
+    FILE *inputFile;
+
+    int numberOfLits, numberOfClauses;
+
+    inputFile = fopen(path, "r");
+
+    checkStartSequence(inputFile);
+
+    numberOfLits = readHeaderParameter(inputFile);
+
+    numberOfClauses = readHeaderParameter(inputFile);
+
+    makeOutput(inputFile, output, numberOfClauses, numberOfLits);
+
+    printOutput(output);
 
     return output;
 }
