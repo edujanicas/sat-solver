@@ -77,7 +77,7 @@ void VECTORfree(V v)
     free(v->items);
 }
 
-V VECTORcopy(V v)
+V VECTORshallowCopy(V v)
 {
     V copy = VECTORinit();
 

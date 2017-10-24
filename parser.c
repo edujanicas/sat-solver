@@ -179,15 +179,3 @@ V parse(char *path) {
 
     return output;
 }
-
-//uncomment for testing purposes
-//
-//int main(int argc, char *argv[]) {
-//    if (argc != 2) {
-//        printf("Please run with exactly one argument\n");
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    printf("parsing file%s\n", argv[1]);
-//    parse(argv[1]);
-//}

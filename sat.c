@@ -96,8 +96,9 @@ V propagate(V formula) {
     V result = VECTORinit();
 
     // Store variables appearing in unit clauses
-    V unit_vars = VECTORinit();
+    V unitVars = VECTORinit();
 
+    // Splitting in unit clauses and non unit clauses
     for (int i = 0; i < VECTORtotal(formula); ++i) {
         V clause = VECTORget(formula, i);
 
@@ -105,41 +106,29 @@ V propagate(V formula) {
             printDebugInt("Size 1 in clause number: ", i);
 
             Var unit_var = VECTORget(clause, 0);
-            VECTORadd(unit_vars, unit_var);
+            VECTORadd(unitVars, unit_var);
         } else {
             printDebugIntInt("Clause n : size", i, VECTORtotal(clause));
 
-            VECTORadd(result, VECTORcopy(clause));
+            VECTORadd(result, VECTORshallowCopy(clause)); //TODO change to deep
         }
     }
+
+    printOutput(result);
 
     // Propagate units
     for (int i = 0; i < VECTORtotal(result); ++i) {
         V clause = VECTORget(result, i);
 
         for (int j = 0; j < VECTORtotal(clause); ++j) {
-            simplifyClause(clause, unit_vars);
+            simplifyClause(clause, unitVars);
         }
     }
     printDebug("Propagation ending...");
 
-    return result;
-}
+    printOutput(result);
 
-int solve(V formula) {
-    V new_formula = propagate(formula);
-    if (!conflict(new_formula) && allVarsAssigned(new_formula)) {
-        return true;
-    } else if (conflict(new_formula)) {
-        return false;
-    }
-    Var assigned = decide(new_formula);
-    if (solve(new_formula)) {
-        return true;
-    } else {
-        change_decision(assigned);
-        return solve(new_formula);
-    }
+    return result;
 }
 
 unsigned int getNumberOfVars(V formula) {
@@ -185,6 +174,22 @@ void printAssignments(V formula) {
     printf("\n");
 }
 
+int solve(V formula) {
+    V new_formula = propagate(formula);
+    if (!conflict(new_formula) && allVarsAssigned(new_formula)) {
+        return true;
+    } else if (conflict(new_formula)) {
+        return false;
+    }
+    Var assigned = decide(new_formula);
+    if (solve(new_formula)) {
+        return true;
+    } else {
+        change_decision(assigned);
+        return solve(new_formula);
+    }
+}
+
 int main(int argc, char **argv) {
 
     if (argc != 2) {
@@ -196,6 +201,7 @@ int main(int argc, char **argv) {
 
     printDebug("Runing dpll...");
     int result = solve(cnf);
+
     if (result == true) {
         printf("SAT\n");
         printAssignments(cnf);

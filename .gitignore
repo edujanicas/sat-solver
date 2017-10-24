@@ -4,6 +4,7 @@ sat
 #clion stuff
 cmake-build-debug/**
 .idea/**
+CMakeLists.txt
 
 # Vim turds
 *.swp
