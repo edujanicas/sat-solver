@@ -82,8 +82,9 @@ void check_vars_in_clause(V clause, V unit_vars) {
     }
 }
 
-// TODO: Copy clauses to result
 V propagate(V formula) {
+    printf("Propagation starting...\n");
+
     // Create simplified formula
     V result = VECTORinit();
 
@@ -94,15 +95,15 @@ V propagate(V formula) {
         V clause = VECTORget(formula, i);
 
         if (VECTORtotal(clause) == 1) {
-            printf("%d: size 1\n", i);
+            printf("Clause %d: size 1\n", i);
 
             Var unit_var = VECTORget(clause, 0);
             VECTORadd(unit_vars, unit_var);
         }
         else {
-            printf("%d: size %d\n", i, VECTORtotal(clause));
+            printf("Clause %d: size %d\n", i, VECTORtotal(clause));
 
-            VECTORadd(result, clause);
+            VECTORadd(result, VECTORcopy(clause));
         }
     }
 
@@ -114,6 +115,7 @@ V propagate(V formula) {
             check_vars_in_clause(clause, unit_vars);
         }
     }
+    printf("Propagation ending...\n");
 
     return result;
 }
@@ -135,44 +137,62 @@ int solve(V formula) {
 }
 
 int main(int argc, char **argv) {
+    /* V formula = VECTORinit(); */
+
+    /* V clause_1 = VECTORinit(); */
+    /* VECTORadd(clause_1, VARinit(1, true)); */
+
+    /* V clause_2 = VECTORinit(); */
+    /* VECTORadd(clause_2, VARinit(1, true)); */
+    /* VECTORadd(clause_2, VARinit(2, false)); */
+
+    /* VECTORadd(formula, clause_1); */
+    /* VECTORadd(formula, clause_2); */
+
+    /* printOutput(formula); */
+
+    /* V output = propagate(formula); */
+
+    /* printOutput(output); */
+
     if (argc != 2) {
         printf("sat accepts only 1 argument which is the filename of the formula.\n");
         exit(EXIT_FAILURE);
     }
     V cnf = parse(argv[1]);
 
-    // while(true) {
-    //     propagate(); // propagate unit clauses
-    //     if(!conflict()) {
-    //         if(allVarsAssigned()) {
-    //             printf("SAT\n");
-    //             exit(EXIT_SUCCESS);
-    //         } else {
-    //             decide(); // pick a new variable and assign it
-    //         }
-    //     } else {
-    //         analize(); // analize conflict and add a conflict cause
-    //         if(topLevelConflict()) {
-    //             printf("UNSAT\n");
-    //             exit(EXIT_SUCCESS);
-    //         } else {
-    //             backtrack() // undo assignments until conflict clause is unit
-    //         }
-    //     }
-    // }
-    printf("Conflict? %d\n", conflict(cnf));
-    printf("All vars assigned? %d\n", allVarsAssigned(cnf));
+    /* // while(true) { */
+    /* //     propagate(); // propagate unit clauses */
+    /* //     if(!conflict()) { */
+    /* //         if(allVarsAssigned()) { */
+    /* //             printf("SAT\n"); */
+    /* //             exit(EXIT_SUCCESS); */
+    /* //         } else { */
+    /* //             decide(); // pick a new variable and assign it */
+    /* //         } */
+    /* //     } else { */
+    /* //         analize(); // analize conflict and add a conflict cause */
+    /* //         if(topLevelConflict()) { */
+    /* //             printf("UNSAT\n"); */
+    /* //             exit(EXIT_SUCCESS); */
+    /* //         } else { */
+    /* //             backtrack() // undo assignments until conflict clause is unit */
+    /* //         } */
+    /* //     } */
+    /* // } */
+    /* printf("Conflict? %d\n", conflict(cnf)); */
+    /* printf("All vars assigned? %d\n", allVarsAssigned(cnf)); */
 
     printf("Runing dpll...\n");
     int result = solve(cnf);
 
-    //printf("%d ",((Var)VECTORget(VECTORget(cnf, 0), 0))->id);
-    //printf("%d\n",((Var)VECTORget(VECTORget(cnf, 0), 0))->value);
-    //printf("%d ",((Var)VECTORget(VECTORget(cnf, 1), 0))->id);
-    //printf("%d\n",((Var)VECTORget(VECTORget(cnf, 1), 0))->value);
+    /* //printf("%d ",((Var)VECTORget(VECTORget(cnf, 0), 0))->id); */
+    /* //printf("%d\n",((Var)VECTORget(VECTORget(cnf, 0), 0))->value); */
+    /* //printf("%d ",((Var)VECTORget(VECTORget(cnf, 1), 0))->id); */
+    /* //printf("%d\n",((Var)VECTORget(VECTORget(cnf, 1), 0))->value); */
 
-    printf("Conflict? %d\n", conflict(cnf));
-    printf("All vars assigned? %d\n", allVarsAssigned(cnf));
+    /* printf("Conflict? %d\n", conflict(cnf)); */
+    /* printf("All vars assigned? %d\n", allVarsAssigned(cnf)); */
 
     if(result == true) {
       printf("SAT\n");

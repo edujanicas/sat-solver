@@ -26,5 +26,6 @@ void VECTORdelete(V, int);
 void VECTORpop(V);
 void VECTORshrink(V, int n);
 void VECTORfree(V);
+V VECTORcopy(V);
 
 #endif

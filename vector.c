@@ -76,3 +76,14 @@ void VECTORfree(V v)
 {
     free(v->items);
 }
+
+V VECTORcopy(V v)
+{
+    V copy = VECTORinit();
+
+    for (int i = 0; i < VECTORtotal(v); ++i) {
+        VECTORadd(copy, VECTORget(v, i));
+    }
+
+    return copy;
+}
