@@ -3,20 +3,23 @@
 #include "vector.h"
 #include "var.h"
 #include "parser.h"
+#include "debugPrinter.h"
 
 
 int conflict(V formula) {
-    // VERY DUMB SOLVER. IT MAY HAVE DIFERENT VARIABLES WITH THE SAME ID AND DIFERENT VALUES
+    // Very dumb solver. It may have different variables with the same id and different values ??? WHAT ???
     for (int i = 0; i < VECTORtotal(formula); i++) {
-        for (int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++) {
-            Var current = ((Var)VECTORget(VECTORget(formula, i), j));
-            if(current->value != unassigned) {
+        V currentClause = VECTORget(formula, i);
+        for (int j = 0; j < VECTORtotal(currentClause); j++) {
+            Var currentVar = VECTORget(currentClause, j);
+            if (currentVar->value != unassigned) {
                 for (int k = i; k < VECTORtotal(formula); k++) {
-                    for (int l = j; l < VECTORtotal(VECTORget(formula, k)); l++){
-                        Var cmp = ((Var)VECTORget(VECTORget(formula, k), l));
-                        if(cmp->value != unassigned &&
-                            current->id == cmp->id &&
-                            current->value != cmp->value) {
+                    V currentCheckingClause = VECTORget(formula, k);
+                    for (int l = j; l < VECTORtotal(currentCheckingClause); l++) {
+                        Var currentCheckingVar = VECTORget(currentCheckingClause, l);
+                        if (currentCheckingVar->value != unassigned &&
+                            currentVar->id == currentCheckingVar->id &&
+                            currentVar->value != currentCheckingVar->value) {
                             return true;
                         }
                     }
@@ -24,24 +27,26 @@ int conflict(V formula) {
             }
         }
     }
-    // CHECK IF THERE ARE NO ALL FALSE OR clauses
+    // Check if there are no all false or clauses
     for (int i = 0; i < VECTORtotal(formula); i++) {
         int value = false;
-        for (int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++) {
-            Var current = ((Var)VECTORget(VECTORget(formula, i), j));
-            if(current -> value == unassigned || VARgetValue(current)==true) {
-              value = true;
+        V currentClause = VECTORget(formula, i);
+        for (int j = 0; j < VECTORtotal(currentClause); j++) {
+            Var currentVar = VECTORget(currentClause, j);
+            if (currentVar->value == unassigned || VARgetValue(currentVar) == true) {
+                value = true;
             }
         }
-        if(value==false) return true;
+        if (value == false) return true;
     }
     return false;
 }
 
 int allVarsAssigned(V formula) {
     for (int i = 0; i < VECTORtotal(formula); i++) {
-        for (int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++) {
-            if (((Var)VECTORget(VECTORget(formula, i), j))->value == unassigned) return false;
+        V currentClause = VECTORget(formula, i);
+        for (int j = 0; j < VECTORtotal(currentClause); j++) {
+            if (((Var) VECTORget(currentClause, j))->value == unassigned) return false;
         }
     }
     return true;
@@ -49,9 +54,10 @@ int allVarsAssigned(V formula) {
 
 Var decide(V formula) {
     for (int i = 0; i < VECTORtotal(formula); i++) {
-        for (int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++) {
-            Var var = (Var)VECTORget(VECTORget(formula, i), j);
-            if (var->value == unassigned){
+        V currentClause = VECTORget(formula, i);
+        for (int j = 0; j < VECTORtotal(currentClause); j++) {
+            Var var = VECTORget(currentClause, j);
+            if (var->value == unassigned) {
                 var->value = true;
                 return var;
             }
@@ -59,31 +65,32 @@ Var decide(V formula) {
     }
     return NULL;
 }
+
 void change_decision(Var assigned) {
-    if(assigned->value == true)
+    if (assigned->value == true)
         assigned->value = false;
-    else
+    else if (assigned->value == false)
         assigned->value = true;
 }
 
 // TODO: Move me somewhere appropriate
 // TODO: Remove variable when appropriate
-void check_vars_in_clause(V clause, V unit_vars) {
+void simplifyClause(V clause, V unitVars) {
     for (int i = 0; i < VECTORtotal(clause); ++i) {
-        Var current_var = VECTORget(clause, i);
+        Var currentVar = VECTORget(clause, i);
 
-        for (int j = 0; j < VECTORtotal(unit_vars); ++j) {
-            Var unit_var = VECTORget(clause, j);
+        for (int j = 0; j < VECTORtotal(unitVars); ++j) {
+            Var unitVar = VECTORget(unitVars, j);
 
-            if (current_var->id == unit_var->id) {
-                current_var->value = unit_var->sign;
+            if (currentVar->id == unitVar->id) {
+                currentVar->value = unitVar->sign;
             }
         }
     }
 }
 
 V propagate(V formula) {
-    printf("Propagation starting...\n");
+    printDebug("Propagation starting...");
 
     // Create simplified formula
     V result = VECTORinit();
@@ -95,13 +102,12 @@ V propagate(V formula) {
         V clause = VECTORget(formula, i);
 
         if (VECTORtotal(clause) == 1) {
-            printf("Clause %d: size 1\n", i);
+            printDebugInt("Size 1 in clause number: ", i);
 
             Var unit_var = VECTORget(clause, 0);
             VECTORadd(unit_vars, unit_var);
-        }
-        else {
-            printf("Clause %d: size %d\n", i, VECTORtotal(clause));
+        } else {
+            printDebugIntInt("Clause n : size", i, VECTORtotal(clause));
 
             VECTORadd(result, VECTORcopy(clause));
         }
@@ -112,23 +118,23 @@ V propagate(V formula) {
         V clause = VECTORget(result, i);
 
         for (int j = 0; j < VECTORtotal(clause); ++j) {
-            check_vars_in_clause(clause, unit_vars);
+            simplifyClause(clause, unit_vars);
         }
     }
-    printf("Propagation ending...\n");
+    printDebug("Propagation ending...");
 
     return result;
 }
 
 int solve(V formula) {
     V new_formula = propagate(formula);
-    if(!conflict(new_formula) && allVarsAssigned(new_formula)) {
+    if (!conflict(new_formula) && allVarsAssigned(new_formula)) {
         return true;
-    } else if (conflict(new_formula)){
+    } else if (conflict(new_formula)) {
         return false;
     }
     Var assigned = decide(new_formula);
-    if(solve(new_formula)) {
+    if (solve(new_formula)) {
         return true;
     } else {
         change_decision(assigned);
@@ -139,13 +145,13 @@ int solve(V formula) {
 unsigned int getNumberOfVars(V formula) {
 
     unsigned int result = 1;
-    
+
     for(int i = 0; i < VECTORtotal(formula); i++) {
         for(int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++ ) {
-            
+
             if(((Var)VECTORget(VECTORget(formula, i), j)) -> id > result) {
-                result = ((Var)VECTORget(VECTORget(formula, i), j)) -> id; 
-            } 
+                result = ((Var) VECTORget(VECTORget(formula, i), j))->id;
+            }
         }
     }
 
@@ -153,25 +159,25 @@ unsigned int getNumberOfVars(V formula) {
 }
 
 void printAssignments(V formula) {
-    
+
     bool printed = false;
 
     for(unsigned int current = 1; current <= getNumberOfVars(formula); current++) {
-        
+
         printed = false;
-        
+
         for(int i = 0; i < VECTORtotal(formula); i++) {
             for(int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++ ) {
-                
-                Var var = ((Var)VECTORget(VECTORget(formula, i), j)); 
+
+                Var var = ((Var) VECTORget(VECTORget(formula, i), j));
                 if(var->id == current && var->value != unassigned) {
-                    
+
                     if(var->value == true) printf("%d ", var->id);
-                    else printf("-%d ", var->id);              
-                    
+                    else printf("-%d ", var->id);
+
                     printed = true;
                     break;
-                } 
+                }
             }
             if(printed == true) break;
         }
@@ -188,15 +194,16 @@ int main(int argc, char **argv) {
 
     V cnf = parse(argv[1]);
 
-    printf("Runing dpll...\n");
+    printDebug("Runing dpll...");
     int result = solve(cnf);
-
-    if(result == true) {
+    if (result == true) {
         printf("SAT\n");
         printAssignments(cnf);
     } else {
-      printf("UNSAT\n");
+        printf("UNSAT\n");
     }
+
+    VECTORfree(cnf);
 
     exit(EXIT_SUCCESS);
 }
