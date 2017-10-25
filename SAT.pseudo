@@ -1,0 +1,84 @@
+propagate {
+	unit_clauses_1 += "clauses of size 1, with the variable unassigned"
+	unit_clauses_n += "clauses of size n, with n-1 variables assigned"
+
+	for(clause : unit_clauses_1) {
+
+	}
+}
+
+clause.c
+	bool CLAUSEnew(V<Var> literals, bool learnt, clause* output) {
+		if(! learnt) {
+			if(CLAUSEclean) {
+				return true;
+			}
+			
+			if("contains p and -p") return true
+
+			for(p : literals) {
+				"remove duplicates of p"
+			}
+		}
+
+		// special cases : length == 0,1
+		if(literals->size() == 0)
+			return false
+		if(literals->size() == 1)
+			//enqueue keeps track of propagations to do
+			sat.c :: enqueue(literals->get(0)->id) 
+		else { // normal case : length >= 2
+
+			"instantiate output"
+
+			"set clause activity to 0" //will need the clause data type after all
+
+			if(learnt) {
+				"if learnt set the second watched literal (the first one is random) to
+					be the literal with the highest decision level"
+					//will also need the cause data type for remembering wathced lits
+					//maybe, minisat remembers it as "literals in position 0 and 1"
+				sat.c :: bumpActivity("this clause") 
+				for (p : literals)	
+					sat.c :: bumpActivityVar(p)
+			}
+
+			//new field in the Var data type : watchers
+			"add the clause to the watcher list of its watched literals"
+		}
+	}
+
+	//returns true if the clause evaluate trivially to true
+	//otherwise remove all false lits and return false
+	bool CLAUSEclean(clause* clause) {
+		if("any literal is true") return true
+		for(p : literals) {
+			"remove p if p->value == false"
+		}
+		return false
+	}
+
+sat.c
+	//return false on conflicts, true otherwise
+	bool enqueue(Var p) {
+		//if it has already been assigned
+		if(assigned(p)) {
+			if(value(p) == false)
+				"conflict"
+			if(value(p) == true) //already propagated
+				return true
+		} else {
+			//I dont understand why negated signe [Mario]
+			assignments[p->value()] = !p->sign()
+		}
+
+		//TODO
+	}
+
+	bool value(Var p){
+		if(p->sign() == true) {
+			return assignments[p->id()]
+		} else if((p->sign() == false))
+			return !assignments[p->id()]
+	}
+
