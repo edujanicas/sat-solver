@@ -58,7 +58,15 @@ clause.c
 		return false
 	}
 
+	bool CLAUSEpropagate(Var p) {
+		//if this method has been called, this clause was watching p
+		//so -p is either in position 0 or 1
+		"make sure neg(p) is in position 1"
+
+	}
+
 sat.c
+	//enqueues vars for future propagation
 	//return false on conflicts, true otherwise
 	bool enqueue(Var p) {
 		//if it has already been assigned
@@ -82,3 +90,19 @@ sat.c
 			return !assignments[p->id()]
 	}
 
+	clause propagate() {
+		while (propagationQ->size() > 0) {
+			Var propagatingVar = propagationQ->dequeue()
+
+			V propagationWatchers = "the clauses watching p"
+
+			for(clause* clause : propagationWatchers) {
+
+			}
+		}
+	}
+
+var.c
+	Var neg(Var p) {
+		return -p;
+	}
