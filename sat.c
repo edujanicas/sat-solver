@@ -1,10 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "vector.h"
-#include "var.h"
-#include "parser.h"
-#include "debugPrinter.h"
+#include "sat.h"
 
+bool value(Var p) {
+    if (p->id < numberOfLiterals)
+        if (p->sign == true) {
+            return assignments[p->id];
+        } else if ((p->sign == false))
+            return !assignments[p->id];
+}
 
 int conflict(V formula) {
     // Check if there are no all false or clauses
