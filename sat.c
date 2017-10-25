@@ -7,26 +7,6 @@
 
 
 int conflict(V formula) {
-    // Very dumb solver. It may have different variables with the same id and different values ??? WHAT ???
-    for (int i = 0; i < VECTORtotal(formula); i++) {
-        V currentClause = VECTORget(formula, i);
-        for (int j = 0; j < VECTORtotal(currentClause); j++) {
-            Var currentVar = VECTORget(currentClause, j);
-            if (currentVar->value != unassigned) {
-                for (int k = i; k < VECTORtotal(formula); k++) {
-                    V currentCheckingClause = VECTORget(formula, k);
-                    for (int l = j; l < VECTORtotal(currentCheckingClause); l++) {
-                        Var currentCheckingVar = VECTORget(currentCheckingClause, l);
-                        if (currentCheckingVar->value != unassigned &&
-                            currentVar->id == currentCheckingVar->id &&
-                            currentVar->value != currentCheckingVar->value) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-    }
     // Check if there are no all false or clauses
     for (int i = 0; i < VECTORtotal(formula); i++) {
         int value = false;
@@ -52,25 +32,36 @@ int allVarsAssigned(V formula) {
     return true;
 }
 
-Var decide(V formula) {
+unsigned int decide(V formula) {
+    
+    unsigned int id = 0;
+    
     for (int i = 0; i < VECTORtotal(formula); i++) {
         V currentClause = VECTORget(formula, i);
         for (int j = 0; j < VECTORtotal(currentClause); j++) {
             Var var = VECTORget(currentClause, j);
-            if (var->value == unassigned) {
+            if (var->value == unassigned && id == 0) {
                 var->value = true;
-                return var;
+                id = var->id;
+            } else if (var->value == unassigned && var->id == id) {
+                var->value = true;
             }
         }
     }
-    return NULL;
+    return id;
 }
 
-void change_decision(Var assigned) {
-    if (assigned->value == true)
-        assigned->value = false;
-    else if (assigned->value == false)
-        assigned->value = true;
+void change_decision(V formula, unsigned int assigned) {
+    
+    for (int i = 0; i < VECTORtotal(formula); i++) {
+        V currentClause = VECTORget(formula, i);
+        for (int j = 0; j < VECTORtotal(currentClause); j++) {
+            Var var = VECTORget(currentClause, j);
+            if (var->id == assigned) {
+                var->value = !(var->value);
+            }
+        }
+    }
 }
 
 // TODO: Move me somewhere appropriate
@@ -181,11 +172,11 @@ int solve(V formula) {
     } else if (conflict(new_formula)) {
         return false;
     }
-    Var assigned = decide(new_formula);
+    unsigned int assigned = decide(new_formula);
     if (solve(new_formula)) {
         return true;
     } else {
-        change_decision(assigned);
+        change_decision(new_formula, assigned);
         return solve(new_formula);
     }
 }
