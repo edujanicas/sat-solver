@@ -1,11 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "vector.h"
-#include "var.h"
-#include "parser.h"
-#include "debugPrinter.h"
+#include "sat.h"
 
-bool* assignments;
+bool value(Var p) {
+    if (p->id <= numberOfLiterals)
+        if (p->sign == true) {
+            return assignments[p->id];
+        } else if ((p->sign == false))
+            return !assignments[p->id];
+}
 
 int conflict(V formula) {
     // Check if there are no all false or clauses
@@ -17,8 +18,7 @@ int conflict(V formula) {
         for (int j = 0; j < VECTORtotal(currentClause); j++) {
             Var currentVar = VECTORget(currentClause, j);
             if (assignments[currentVar->id] == unassigned || 
-                (currentVar->sign == true && assignments[currentVar->id] == true) || 
-                (currentVar->sign == false && assignments[currentVar->id] == false)) {
+                value(currentVar) == true) {
                 flag = true;
             }
         }
@@ -45,7 +45,7 @@ unsigned int getNumberOfIds(V formula) {
 }
 
 int allVarsAssigned(V formula) {
-    for (unsigned int i = 1; i <= getNumberOfIds(formula); i++) {
+    for (unsigned int i = 1; i <= numberOfLiterals; i++) {
         if (assignments[i] == unassigned) return false;
     }
     return true;
@@ -53,7 +53,7 @@ int allVarsAssigned(V formula) {
 
 unsigned int decide(V formula) {
     
-    for (unsigned int id = 1; id <= getNumberOfIds(formula); id++) {
+    for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
             assignments[id] = true;
             return id;
@@ -128,7 +128,7 @@ V propagate(V formula) {
 
 void printAssignments(V formula) {
 
-    for(unsigned int i = 1; i <= getNumberOfIds(formula); i++)           
+    for(unsigned int i = 1; i <= numberOfLiterals; i++)           
         if(assignments[i]) printf("%d ", i);
         else printf("-%d ", i);
     printf("\n");
@@ -159,10 +159,10 @@ int main(int argc, char **argv) {
     
     V cnf = parse(argv[1]);
 
-    unsigned int numberOfIds = getNumberOfIds(cnf);
-    assignments = (bool*)malloc(sizeof(bool)*numberOfIds + sizeof(bool));
+    numberOfLiterals = getNumberOfIds(cnf);
+    assignments = (bool*)malloc(sizeof(bool)*numberOfLiterals + sizeof(bool));
 
-    for(unsigned int i = 0; i <= numberOfIds; i++) {
+    for(unsigned int i = 0; i <= numberOfLiterals; i++) {
         assignments[i] = unassigned;
     }
 

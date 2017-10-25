@@ -1,12 +1,3 @@
-propagate {
-	unit_clauses_1 += "clauses of size 1, with the variable unassigned"
-	unit_clauses_n += "clauses of size n, with n-1 variables assigned"
-
-	for(clause : unit_clauses_1) {
-
-	}
-}
-
 clause.c
 	bool CLAUSEnew(V<Var> literals, bool learnt, clause* output) {
 		if(! learnt) {
@@ -43,7 +34,7 @@ clause.c
 					sat.c :: bumpActivityVar(p)
 			}
 
-			//new field in the Var data type : watchers
+			//new field in the sat : watchers
 			"add the clause to the watcher list of its watched literals"
 		}
 	}
@@ -58,10 +49,35 @@ clause.c
 		return false
 	}
 
-	bool CLAUSEpropagate(Var p) {
+	//return false if the clause is unit and the unit variable is already 
+	//present in the propagation queue with opposit sign
+	bool CLAUSEpropagate(clause* clause, Var p) {
 		//if this method has been called, this clause was watching p
 		//so -p is either in position 0 or 1
 		"make sure neg(p) is in position 1"
+
+		if("clause[0] is true")
+			//then the clause is already satisfied
+			"re insert clause into watchers[p]"
+			return true;
+
+		for (Var q : clause->vars) {
+			if ("q is not false-assigned") {
+				"swap -p and q"
+				"add clause to wathcers of -q"
+				return true;
+			}
+
+		}
+
+		//if no watchable literals is found (should have returned by now)
+		//clause is unit under current assignment
+		//(and the only unassigned literal may be the zero-th)
+		"re insert clause into watchers[p]"
+
+		//as wee can then infer that literal, add it into propagation queue
+		return sat :: enqueue(clause->vars[0]) //returns false on conflicts
+
 
 	}
 
@@ -90,15 +106,26 @@ sat.c
 			return !assignments[p->id()]
 	}
 
+	//return the conflicting clause on conflict
+	//NULL otherwise
 	clause propagate() {
 		while (propagationQ->size() > 0) {
 			Var propagatingVar = propagationQ->dequeue()
 
+			watchers[p]->remove("the clauses watching p")
 			V propagationWatchers = "the clauses watching p"
 
 			for(clause* clause : propagationWatchers) {
-
+				if(!CLAUSEpropagate(clause, propagatingVar)) {
+					//clause was unit and conflicting
+					watchers[p]->add("the clauses watching p, from the one 
+										after the conflicting one on")
+					propagationQ->flush()
+					return clause;
+				}
 			}
+
+			return NULL;s
 		}
 	}
 

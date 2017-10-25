@@ -22,4 +22,6 @@ bool VARgetValue(Var v);
 bool VARisAssigned(Var v);
 bool VARisPositive(Var v);
 
+Var neg(Var p);
+
 #endif
