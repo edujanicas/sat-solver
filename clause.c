@@ -39,9 +39,9 @@ bool CLAUSEclean(V literals) {
     int i = 0;
     for (i = 0; i < VECTORtotal(literals); i++) {
         Var currentVar = VECTORget(literals, i);
-        if (assignments[currentVar->id] == true) {
+        if (value(currentVar) == true) {
             return true;
-        } else if (assignments[currentVar->id] == false) {
+        } else if (value(currentVar) == false) {
             VECTORdelete(literals, i);
         }
     }
@@ -61,4 +61,8 @@ void CLAUSEremoveDuplicates(V literals) {
             }
         }
     }
+}
+
+bool CLAUSEpropagate(C clause, Var p) {
+    //TODO
 }

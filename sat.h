@@ -15,19 +15,17 @@ bool value(Var p);
 
 int conflict(V formula);
 
-int allVarsAssigned(V formula);
+int allVarsAssigned();
 
-unsigned int decide(V formula);
+unsigned int decide();
 
 void change_decision(unsigned int assigned);
 
 void simplifyClause(V clause, V unitVars);
 
-V propagate(V formula);
+V propagate();
 
-unsigned int getNumberOfVars(V formula);
-
-void printAssignments(V formula);
+void printAssignments();
 
 int solve(V formula);
 

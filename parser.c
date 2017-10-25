@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "debugPrinter.h"
+#include "sat.h"
 
 void printOutput(V output) {
     int i, j;
@@ -163,17 +164,17 @@ V parse(char *path) {
 
     FILE *inputFile;
 
-    int numberOfLits, numberOfClauses;
+    int numberOfClauses;
 
     inputFile = fopen(path, "r");
 
     checkStartSequence(inputFile);
 
-    numberOfLits = readHeaderParameter(inputFile);
+    numberOfLiterals = readHeaderParameter(inputFile);
 
     numberOfClauses = readHeaderParameter(inputFile);
 
-    makeOutput(inputFile, output, numberOfClauses, numberOfLits);
+    makeOutput(inputFile, output, numberOfClauses, numberOfLiterals);
 
     printOutput(output);
 

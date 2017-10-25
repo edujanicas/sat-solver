@@ -18,8 +18,6 @@ struct var {
 };
 
 Var VARinit(unsigned int id, bool sign);
-bool VARgetValue(Var v);
-bool VARisAssigned(Var v);
 bool VARisPositive(Var v);
 
 Var neg(Var p);

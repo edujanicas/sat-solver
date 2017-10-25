@@ -1,11 +1,14 @@
 #include "sat.h"
 
 bool value(Var p) {
-    if (p->id <= numberOfLiterals)
+    if (p->id <= numberOfLiterals) {
         if (p->sign == true) {
             return assignments[p->id];
         } else if ((p->sign == false))
             return !assignments[p->id];
+        return unassigned;
+    }
+    return unassigned;
 }
 
 int conflict(V formula) {
@@ -28,30 +31,14 @@ int conflict(V formula) {
     return false;
 }
 
-unsigned int getNumberOfIds(V formula) {
-
-    unsigned int result = 1;
-
-    for(int i = 0; i < VECTORtotal(formula); i++) {
-        for(int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++ ) {
-
-            if(((Var)VECTORget(VECTORget(formula, i), j)) -> id > result) {
-                result = ((Var) VECTORget(VECTORget(formula, i), j))->id;
-            }
-        }
-    }
-
-    return result;
-}
-
-int allVarsAssigned(V formula) {
+int allVarsAssigned() {
     for (unsigned int i = 1; i <= numberOfLiterals; i++) {
         if (assignments[i] == unassigned) return false;
     }
     return true;
 }
 
-unsigned int decide(V formula) {
+unsigned int decide() {
     
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
@@ -67,8 +54,7 @@ void change_decision(unsigned int assigned) {
 }
 
 /*
-// TODO: Move me somewhere appropriate
-// TODO: Remove variable when appropriate
+// TODO: KILL ME
 void simplifyClause(V clause, V unitVars) {
     for (int i = 0; i < VECTORtotal(clause); ++i) {
         Var currentVar = VECTORget(clause, i);
@@ -126,7 +112,7 @@ V propagate(V formula) {
 }
 */
 
-void printAssignments(V formula) {
+void printAssignments() {
 
     for(unsigned int i = 1; i <= numberOfLiterals; i++)           
         if(assignments[i]) printf("%d ", i);
@@ -136,12 +122,12 @@ void printAssignments(V formula) {
 
 int solve(V formula) {
     V new_formula = formula;
-    if (!conflict(new_formula) && allVarsAssigned(new_formula)) {
+    if (!conflict(new_formula) && allVarsAssigned()) {
         return true;
     } else if (conflict(new_formula)) {
         return false;
     }
-    unsigned int assigned = decide(new_formula);
+    unsigned int assigned = decide();
     if (solve(new_formula)) {
         return true;
     } else {
@@ -159,7 +145,6 @@ int main(int argc, char **argv) {
     
     V cnf = parse(argv[1]);
 
-    numberOfLiterals = getNumberOfIds(cnf);
     assignments = (bool*)malloc(sizeof(bool)*numberOfLiterals + sizeof(bool));
 
     for(unsigned int i = 0; i <= numberOfLiterals; i++) {
@@ -171,7 +156,7 @@ int main(int argc, char **argv) {
 
     if (result == true) {
         printf("SAT\n");
-        printAssignments(cnf);
+        printAssignments();
     } else {
         printf("UNSAT\n");
     }
