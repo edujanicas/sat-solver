@@ -5,65 +5,68 @@
 #include "parser.h"
 #include "debugPrinter.h"
 
+bool* assignments;
 
 int conflict(V formula) {
     // Check if there are no all false or clauses
     for (int i = 0; i < VECTORtotal(formula); i++) {
-        int value = false;
+        int flag = false;
+        
         V currentClause = VECTORget(formula, i);
+        
         for (int j = 0; j < VECTORtotal(currentClause); j++) {
             Var currentVar = VECTORget(currentClause, j);
-            if (currentVar->value == unassigned || VARgetValue(currentVar) == true) {
-                value = true;
+            if (assignments[currentVar->id] == unassigned || 
+                (currentVar->sign == true && assignments[currentVar->id] == true) || 
+                (currentVar->sign == false && assignments[currentVar->id] == false)) {
+                flag = true;
             }
         }
-        if (value == false) return true;
+        
+        if (flag == false) return true;
     }
     return false;
 }
 
-int allVarsAssigned(V formula) {
-    for (int i = 0; i < VECTORtotal(formula); i++) {
-        V currentClause = VECTORget(formula, i);
-        for (int j = 0; j < VECTORtotal(currentClause); j++) {
-            if (((Var) VECTORget(currentClause, j))->value == unassigned) return false;
+unsigned int getNumberOfIds(V formula) {
+
+    unsigned int result = 1;
+
+    for(int i = 0; i < VECTORtotal(formula); i++) {
+        for(int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++ ) {
+
+            if(((Var)VECTORget(VECTORget(formula, i), j)) -> id > result) {
+                result = ((Var) VECTORget(VECTORget(formula, i), j))->id;
+            }
         }
+    }
+
+    return result;
+}
+
+int allVarsAssigned(V formula) {
+    for (unsigned int i = 1; i <= getNumberOfIds(formula); i++) {
+        if (assignments[i] == unassigned) return false;
     }
     return true;
 }
 
 unsigned int decide(V formula) {
     
-    unsigned int id = 0;
-    
-    for (int i = 0; i < VECTORtotal(formula); i++) {
-        V currentClause = VECTORget(formula, i);
-        for (int j = 0; j < VECTORtotal(currentClause); j++) {
-            Var var = VECTORget(currentClause, j);
-            if (var->value == unassigned && id == 0) {
-                var->value = true;
-                id = var->id;
-            } else if (var->value == unassigned && var->id == id) {
-                var->value = true;
-            }
-        }
+    for (unsigned int id = 1; id <= getNumberOfIds(formula); id++) {
+        if (assignments[id] == unassigned) {
+            assignments[id] = true;
+            return id;
+        } 
     }
-    return id;
+    return 0;
 }
 
-void change_decision(V formula, unsigned int assigned) {
-    
-    for (int i = 0; i < VECTORtotal(formula); i++) {
-        V currentClause = VECTORget(formula, i);
-        for (int j = 0; j < VECTORtotal(currentClause); j++) {
-            Var var = VECTORget(currentClause, j);
-            if (var->id == assigned) {
-                var->value = !(var->value);
-            }
-        }
-    }
+void change_decision(unsigned int assigned) {
+    assignments[assigned] = false;
 }
 
+/*
 // TODO: Move me somewhere appropriate
 // TODO: Remove variable when appropriate
 void simplifyClause(V clause, V unitVars) {
@@ -121,52 +124,18 @@ V propagate(V formula) {
 
     return result;
 }
-
-unsigned int getNumberOfVars(V formula) {
-
-    unsigned int result = 1;
-
-    for(int i = 0; i < VECTORtotal(formula); i++) {
-        for(int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++ ) {
-
-            if(((Var)VECTORget(VECTORget(formula, i), j)) -> id > result) {
-                result = ((Var) VECTORget(VECTORget(formula, i), j))->id;
-            }
-        }
-    }
-
-    return result;
-}
+*/
 
 void printAssignments(V formula) {
 
-    bool printed = false;
-
-    for(unsigned int current = 1; current <= getNumberOfVars(formula); current++) {
-
-        printed = false;
-
-        for(int i = 0; i < VECTORtotal(formula); i++) {
-            for(int j = 0; j < VECTORtotal(VECTORget(formula, i)); j++ ) {
-
-                Var var = ((Var) VECTORget(VECTORget(formula, i), j));
-                if(var->id == current && var->value != unassigned) {
-
-                    if(var->value == true) printf("%d ", var->id);
-                    else printf("-%d ", var->id);
-
-                    printed = true;
-                    break;
-                }
-            }
-            if(printed == true) break;
-        }
-    }
+    for(unsigned int i = 1; i <= getNumberOfIds(formula); i++)           
+        if(assignments[i]) printf("%d ", i);
+        else printf("-%d ", i);
     printf("\n");
 }
 
 int solve(V formula) {
-    V new_formula = propagate(formula);
+    V new_formula = formula;
     if (!conflict(new_formula) && allVarsAssigned(new_formula)) {
         return true;
     } else if (conflict(new_formula)) {
@@ -176,7 +145,7 @@ int solve(V formula) {
     if (solve(new_formula)) {
         return true;
     } else {
-        change_decision(new_formula, assigned);
+        change_decision(assigned);
         return solve(new_formula);
     }
 }
@@ -187,8 +156,15 @@ int main(int argc, char **argv) {
         printf("sat accepts only 1 argument which is the filename of the formula.\n");
         exit(EXIT_FAILURE);
     }
-
+    
     V cnf = parse(argv[1]);
+
+    unsigned int numberOfIds = getNumberOfIds(cnf);
+    assignments = (bool*)malloc(sizeof(bool)*numberOfIds + sizeof(bool));
+
+    for(unsigned int i = 0; i <= numberOfIds; i++) {
+        assignments[i] = unassigned;
+    }
 
     printDebug("Runing dpll...");
     int result = solve(cnf);
