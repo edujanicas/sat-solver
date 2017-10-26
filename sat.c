@@ -15,17 +15,17 @@ int conflict(V formula) {
     // Check if there are no all false or clauses
     for (int i = 0; i < VECTORtotal(formula); i++) {
         int flag = false;
-        
+
         V currentClause = VECTORget(formula, i);
-        
+
         for (int j = 0; j < VECTORtotal(currentClause); j++) {
             Var currentVar = VECTORget(currentClause, j);
-            if (assignments[currentVar->id] == unassigned || 
+            if (assignments[currentVar->id] == unassigned ||
                 value(currentVar) == true) {
                 flag = true;
             }
         }
-        
+
         if (flag == false) return true;
     }
     return false;
@@ -39,18 +39,38 @@ int allVarsAssigned() {
 }
 
 unsigned int decide() {
-    
+
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
             assignments[id] = true;
             return id;
-        } 
+        }
     }
     return 0;
 }
 
 void change_decision(unsigned int assigned) {
     assignments[assigned] = false;
+}
+
+//returns false on conflict, true on succesfull enqueueing
+bool enqueue(Var p, C from) {
+
+    if (value(p) == false) {
+        //conflict
+        return false;
+    } else if (value(p) == true) {
+        //already assigned
+        return true;
+    } else {
+        assignments[p->id] = neg(p)->sign;
+        //TODO: decision levels, reasoning list, trail
+        //level = sat.c :: decisionLevel();
+        //level = sat.c :: reason[p->id] = from;
+        //level = QUEUEinsertsat.c :: trail, p);
+        QUEUEinsert(propagationQ, p);
+        return true;
+    }
 }
 
 /*
@@ -114,8 +134,8 @@ V propagate(V formula) {
 
 void printAssignments() {
 
-    for(unsigned int i = 1; i <= numberOfLiterals; i++)           
-        if(assignments[i]) printf("%d ", i);
+    for (unsigned int i = 1; i <= numberOfLiterals; i++)
+        if (assignments[i]) printf("%d ", i);
         else printf("-%d ", i);
     printf("\n");
 }
@@ -142,14 +162,22 @@ int main(int argc, char **argv) {
         printf("sat accepts only 1 argument which is the filename of the formula.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     V cnf = parse(argv[1]);
 
-    assignments = (bool*)malloc(sizeof(bool)*numberOfLiterals + sizeof(bool));
+    assignments = (bool *) malloc(sizeof(bool) * numberOfLiterals + sizeof(bool));
 
-    for(unsigned int i = 0; i <= numberOfLiterals; i++) {
+    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         assignments[i] = unassigned;
     }
+
+    watchers = (V *) malloc(sizeof(V) * numberOfLiterals);
+
+    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
+        watchers[i] = VECTORinit();
+    }
+
+    propagationQ = QUEUEinit();
 
     printDebug("Runing dpll...");
     int result = solve(cnf);

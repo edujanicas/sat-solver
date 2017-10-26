@@ -12,17 +12,14 @@ bool CLAUSEnew(V literals, bool learnt, C output) {
         }
     }
 
-    //removing duplicates
     CLAUSEremoveDuplicates(literals);
 
     if (VECTORtotal(literals) == 0)
         return false;
 
     if (VECTORtotal(literals) == 1) {
-        //TODO: sat::enqueue()
-        //enqueue(((Var) VECTORget(literals, 0))->id);
+        enqueue((Var) VECTORget(literals, 0), NULL);
     } else {
-        //TODO: clauses of lenght 1 will not be added!
         output = malloc(sizeof(struct clause));
         output->learnt = learnt;
         output->activity = 0;
@@ -31,7 +28,9 @@ bool CLAUSEnew(V literals, bool learnt, C output) {
             //TODO: see SAT.pseudo
         }
 
-        //TODO: add clauses to watchers of lits[0, 1]
+        //adding to watchers of literals[0, 1]
+        VECTORadd(watchers[((Var) VECTORget(literals, 0))->id], output);
+        VECTORadd(watchers[((Var) VECTORget(literals, 1))->id], output);
     }
 }
 
