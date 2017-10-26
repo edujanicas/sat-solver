@@ -61,7 +61,7 @@ clause.c
 			"re insert clause into watchers[p]"
 			return true;
 
-		for (Var q : clause->vars) {
+		for (Var q : "vars from index 2 on") {
 			if ("q is not false-assigned") {
 				"swap -p and q"
 				"add clause to wathcers of -q"
