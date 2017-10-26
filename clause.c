@@ -29,8 +29,8 @@ bool CLAUSEnew(V literals, bool learnt, C output) {
         }
 
         //adding to watchers of literals[0, 1]
-        VECTORadd(watchers[((Var) VECTORget(literals, 0))->id], output);
-        VECTORadd(watchers[((Var) VECTORget(literals, 1))->id], output);
+        addToWatchersOf(output, ((Var) VECTORget(literals, 0)));
+        addToWatchersOf(output, ((Var) VECTORget(literals, 1)));
     }
 }
 
@@ -63,5 +63,40 @@ void CLAUSEremoveDuplicates(V literals) {
 }
 
 bool CLAUSEpropagate(C clause, Var p) {
-    //TODO
+    //invariant: at the moment of the call the clause is not in watchers[p->id] anymore
+
+    Var negP = neg(p);
+
+    //make sure -p is in literals[1]
+    if (((Var) VECTORget(clause->literals, 0))->id == p->id &&
+        ((Var) VECTORget(clause->literals, 0))->sign == negP->sign) {
+        VECTORset(clause->literals, 0, VECTORget(clause->literals, 1));
+        VECTORset(clause->literals, 1, neg(p));
+    }
+
+    free(negP);
+
+    if (value((Var) VECTORget(clause->literals, 0)) == true) {
+        //already satisfied, reinsert into watchers of p
+        addToWatchersOf(clause, p);
+        return true;
+    }
+
+    //else look for another variable to watch
+    for (int i = 2; i < VECTORtotal(clause->literals); i++) {
+        Var currentVar = VECTORget(clause->literals, i);
+        if (value(currentVar) != false) {
+            VECTORset(clause->literals, i, currentVar);
+            VECTORset(clause->literals, i, neg(p));
+            addToWatchersOf(clause, currentVar);
+        }
+    }
+
+    //if no watchable variable is found, clause is unit
+    addToWatchersOf(clause, p);
+    return enqueue(VECTORget(clause->literals, 0), clause);
+}
+
+void addToWatchersOf(C clause, Var p) {
+    VECTORadd(watchers[p->id], clause);
 }
