@@ -1,12 +1,11 @@
 #include "sat.h"
 
 bool value(Var p) {
-    if (p->id <= numberOfLiterals) {
+    if (p->id <= numberOfLiterals && assignments[p->id] != unassigned) {
         if (p->sign == true) {
             return assignments[p->id];
         } else if (p->sign == false)
             return !assignments[p->id];
-        return unassigned;
     }
     return unassigned;
 }
@@ -51,9 +50,8 @@ unsigned int decide() {
             trail_lim = realloc(trail_lim, sizeof(int) * trail_lim_size);
             trail_lim[trail_lim_size - 1] = VECTORtotal(trail);
 
-            assignments[id] = true;
             // Dummy variable to store the id
-            VECTORadd(trail, VARinit(id, true));
+            enqueue(VARinit(id, false), NULL);
 
             return id;
         }
