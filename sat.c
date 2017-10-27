@@ -4,7 +4,7 @@ bool value(Var p) {
     if (p->id <= numberOfLiterals) {
         if (p->sign == true) {
             return assignments[p->id];
-        } else if ((p->sign == false))
+        } else if (p->sign == false)
             return !assignments[p->id];
         return unassigned;
     }
@@ -46,7 +46,15 @@ unsigned int decide() {
     // TODO: Add heuristic to choose variable
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
+            
+            trail_lim_size++;
+            trail_lim = realloc(trail_lim, sizeof(int) * trail_lim_size);
+            trail_lim[trail_lim_size - 1] = VECTORtotal(trail);
+
             assignments[id] = true;
+            // Dummy variable to store the id
+            VECTORadd(trail, VARinit(id, true));
+
             return id;
         }
     }
@@ -71,7 +79,8 @@ bool enqueue(Var p, C from) {
         //TODO: decision levels, reasoning list, trail
         //level = sat.c :: decisionLevel();
         //level = sat.c :: reason[p->id] = from;
-        //level = QUEUEinsertsat.c :: trail, p);
+        VECTORadd(trail, p);
+
         QUEUEinsert(propagationQ, p);
         return true;
     }
@@ -136,6 +145,21 @@ V propagate(V formula) {
 }
 */
 
+void cancel() {
+
+    // c is the difference between the total number of assignments and and first assignment of the 
+    // current level, i.e., the number of assignments to cancel
+    int c = VECTORtotal(trail) - trail_lim[trail_lim_size--];
+    for (; c != 0; c--) {
+        // Get the last element from the trail vector (last assignment)
+        Var p = VECTORget(trail, VECTORtotal(trail) - 1);
+        // p is null
+        assignments[p->id] = unassigned;
+        VECTORpop(trail);
+    }
+
+}
+
 void printAssignments() {
 
     for (unsigned int i = 1; i <= numberOfLiterals; i++)
@@ -160,10 +184,17 @@ int solve(V formula) {
     if (solve(new_formula)) {
         return true;
     } else {
-        // FIXME: Varibles set to false are not unassigned
+        
         change_decision(assigned);
 
-        return solve(new_formula);
+        if(solve(new_formula)) {
+            // If we are able to solve the formula with the new assignment, the solver worked
+            return true;
+        } else {
+            // If not, we undo the last assignment and backtrack
+            cancel();
+            return false;
+        }
     }
 }
 
@@ -176,14 +207,17 @@ int main(int argc, char **argv) {
 
     V cnf = parse(argv[1]);
 
+    // Initialize the assignments vector. Each literal is indexed at its id (0 index unused)
     assignments = (bool*) malloc(sizeof(bool) * numberOfLiterals + sizeof(bool));
-
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         assignments[i] = unassigned;
     }
 
-    watchers = (V*) malloc(sizeof(V) * numberOfLiterals);
+    // Trail vector will keep track of each assignment, to backtrack
+    trail = VECTORinit();    
+    trail_lim_size = 0;
 
+    watchers = (V*) malloc(sizeof(V) * numberOfLiterals);
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         watchers[i] = VECTORinit();
     }
