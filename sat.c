@@ -12,7 +12,7 @@ bool value(Var p) {
 }
 
 int conflict(V formula) {
-    // Check if there are no all false or clauses
+    // Check if there is at least one clause whose literals are all false
     for (int i = 0; i < VECTORtotal(formula); i++) {
         int flag = false;
 
@@ -23,11 +23,15 @@ int conflict(V formula) {
             if (assignments[currentVar->id] == unassigned ||
                 value(currentVar) == true) {
                 flag = true;
+
+                break;
             }
         }
-
+        // Each literal of currentClause is false
         if (flag == false) return true;
     }
+
+    // There are no clauses whose literals are all false
     return false;
 }
 
@@ -39,7 +43,7 @@ int allVarsAssigned() {
 }
 
 unsigned int decide() {
-
+    // TODO: Add heuristic to choose variable
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
             assignments[id] = true;
@@ -141,17 +145,24 @@ void printAssignments() {
 }
 
 int solve(V formula) {
+    // TODO: new_formula = propagate(formula)
     V new_formula = formula;
+
     if (!conflict(new_formula) && allVarsAssigned()) {
         return true;
     } else if (conflict(new_formula)) {
         return false;
     }
+
     unsigned int assigned = decide();
+
+    // At this point, there are no conflicts and some variables unassigned
     if (solve(new_formula)) {
         return true;
     } else {
+        // FIXME: Varibles set to false are not unassigned
         change_decision(assigned);
+
         return solve(new_formula);
     }
 }
@@ -165,13 +176,13 @@ int main(int argc, char **argv) {
 
     V cnf = parse(argv[1]);
 
-    assignments = (bool *) malloc(sizeof(bool) * numberOfLiterals + sizeof(bool));
+    assignments = (bool*) malloc(sizeof(bool) * numberOfLiterals + sizeof(bool));
 
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         assignments[i] = unassigned;
     }
 
-    watchers = (V *) malloc(sizeof(V) * numberOfLiterals);
+    watchers = (V*) malloc(sizeof(V) * numberOfLiterals);
 
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         watchers[i] = VECTORinit();
