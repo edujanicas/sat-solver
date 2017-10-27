@@ -11,7 +11,7 @@ bool value(Var p) {
     return unassigned;
 }
 
-int conflict(V formula) {
+bool conflict(V formula) {
     // Check if there is at least one clause whose literals are all false
     for (int i = 0; i < VECTORtotal(formula); i++) {
         int flag = false;
@@ -35,7 +35,7 @@ int conflict(V formula) {
     return false;
 }
 
-int allVarsAssigned() {
+bool allVarsAssigned() {
     for (unsigned int i = 1; i <= numberOfLiterals; i++) {
         if (assignments[i] == unassigned) return false;
     }
@@ -169,32 +169,53 @@ void printAssignments() {
 }
 
 int solve(V formula) {
-    // TODO: new_formula = propagate(formula)
-    V new_formula = formula;
 
-    if (!conflict(new_formula) && allVarsAssigned()) {
-        return true;
-    } else if (conflict(new_formula)) {
-        return false;
-    }
+    // Current assigned variable
+    unsigned int assigned = 0;
+    bool conf = false;
 
-    unsigned int assigned = decide();
+    while(true) {
 
-    // At this point, there are no conflicts and some variables unassigned
-    if (solve(new_formula)) {
-        return true;
-    } else {
-        
-        change_decision(assigned);
+        // TODO: new_formula = propagate(formula)
+        V new_formula = formula;
 
-        if(solve(new_formula)) {
-            // If we are able to solve the formula with the new assignment, the solver worked
-            return true;
-        } else {
-            // If not, we undo the last assignment and backtrack
-            cancel();
+        if (conf && trail_lim_size == 0) {
+            // FIXME: Workarround spot before having propagate
+            // Correct place for this check will be next to the other ifs
+
+            // Trail size = 0 means we are at the root level
+            // Top level conflict!
             return false;
         }
+
+        // Check for conflicts
+        conf = conflict(new_formula);
+
+        if (!conf && allVarsAssigned()) {
+            
+            return true;
+
+        } 
+        /* else if (conf && trail_lim_size == 0) {
+            // Trail size = 0 means we are at the root level
+            // Top level conflict!
+            return false;
+
+        } */ 
+        else if (conf) {
+            // Conflict in the middle of the tree
+            // TODO: Analize the conflict and learn something
+            // TODO: Non chronological backtracking
+            if(assignments[assigned] == true) change_decision(assigned);
+            else cancel();
+
+        } else {
+            // No conflicts
+
+            // TODO: Simplify DB if on top level
+            // TODO: Reduce the number of learnt clauses to avoid size issues
+            assigned = decide();
+        }    
     }
 }
 

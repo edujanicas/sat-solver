@@ -24,9 +24,9 @@ int trail_lim_size;
 // --- Solver Functions
 bool value(Var p);
 
-int conflict(V formula);
+bool conflict(V formula);
 
-int allVarsAssigned();
+bool allVarsAssigned();
 
 unsigned int decide();
 
