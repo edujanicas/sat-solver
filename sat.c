@@ -134,9 +134,11 @@ V propagate(V formula) {
 
 void printAssignments() {
 
-    for (unsigned int i = 1; i <= numberOfLiterals; i++)
-        if (assignments[i]) printf("%d ", i);
-        else printf("-%d ", i);
+    for (unsigned int i = 1; i <= numberOfLiterals; i++) {
+        if (assignments[i]) printf("%d", i);
+        else printf("-%d", i);
+        if (i != numberOfLiterals) printf(" ");
+    }
     printf("\n");
 }
 

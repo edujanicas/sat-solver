@@ -1,7 +1,7 @@
 #ifndef SAT_DEBUGPRINTER_H
 #define SAT_DEBUGPRINTER_H
 
-#define IS_DEBUG 1
+#define IS_DEBUG 0
 
 void printDebugInt(char* message, int value);
 
