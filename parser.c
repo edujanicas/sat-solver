@@ -2,23 +2,6 @@
 #include "debugPrinter.h"
 #include "sat.h"
 
-void printOutput(V output) {
-    int i, j;
-    printDebugInt("Number of parsed clauses: ", VECTORtotal(output));
-    for (i = 0; i < VECTORtotal(output); i++) {
-        printDebugInt("Clause", i);
-        V clause = VECTORget(output, i);
-        for (j = 0; j < VECTORtotal(clause); j++) {
-            Var var = VECTORget(clause, j);
-            if (!var->sign)
-                printDebugInt("-", var->id);
-            else
-                printDebugInt("", var->id);
-        }
-        printDebug("\n");
-    }
-}
-
 void badFormatted(char *message, char *details) {
     printf("ERROR: the file is badly formatted. %s%s<\n", message, details);
     exit(EXIT_FAILURE);
@@ -106,25 +89,25 @@ int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
     return readNumber;
 }
 
-void makeOutput(FILE *inputFile, V output, int numberOfClauses, int numberOfLits) {
-    int i;
-    V tempClause;
+bool makeOutput(FILE *inputFile, V output) {
+    V literals;
     Var tempVar;
+    C tempClause = NULL;
     int lastReadChar = 0;
     int readInt;
 
-    for (i = 0; i < numberOfClauses; i++) {
-        tempClause = VECTORinit();
+    for (unsigned int i = 0; i < numberOfClauses; i++) {
+        literals = VECTORinit();
         do {
             readInt = readNumberUntilSpace(inputFile, &lastReadChar);
             printDebugInt("read  ", readInt);
-            if (abs(readInt) < 0 || abs(readInt) > numberOfLits) {
+            if (abs(readInt) < 0 || abs(readInt) > numberOfLiterals) {
                 badFormatted("not a valid literal", "");
             }
 
             if (readInt != 0) {
                 tempVar = VARinit((unsigned int) abs(readInt), readInt > 0);
-                VECTORadd(tempClause, tempVar);
+                VECTORadd(literals, tempVar);
                 printDebug("added\n");
             }
 
@@ -139,13 +122,22 @@ void makeOutput(FILE *inputFile, V output, int numberOfClauses, int numberOfLits
             }
 
         } while (readInt != 0);
-        printDebug("adding clause\n");
-        VECTORadd(output, tempClause);
+        printDebugInt("creating clause of length: ", VECTORtotal(literals));
+        if (CLAUSEnew(literals, false, &tempClause)) {
+            if (tempClause != NULL) {
+                printDebug("adding clause\n");
+                VECTORadd(output, tempClause);
+            } else {
+                printDebug("unit clause enqueued, not adding\n");
+            }
+        } else {
+            return false;
+        }
 
     }
 
     if (lastReadChar != EOF)
-        printDebugInt("WARNING: Heading indicated %d clauses, they have been parsed correctly. EOF not reached.\n",
+        printDebugInt("WARNING: EOF not reached. Number of clauses parsed parsed correctly: ",
                       numberOfClauses);
 }
 
@@ -159,24 +151,33 @@ int readHeaderParameter(FILE *inputFile) {
     return parameter;
 }
 
-V parse(char *path) {
-    V output = VECTORinit();
-
+FILE *PARSERinit(char *path) {
     FILE *inputFile;
-
-    int numberOfClauses;
 
     inputFile = fopen(path, "r");
 
     checkStartSequence(inputFile);
 
+    return inputFile;
+}
+
+void PARSEheader(FILE * inputFile) {
+
     numberOfLiterals = readHeaderParameter(inputFile);
 
     numberOfClauses = readHeaderParameter(inputFile);
+}
 
-    makeOutput(inputFile, output, numberOfClauses, numberOfLiterals);
+V PARSEformula(FILE *inputFile) {
+    V output = VECTORinit();
 
-    printOutput(output);
+    if(makeOutput(inputFile, output)) {
 
-    return output;
+        printFormula(output);
+
+        return output;
+    } else {
+        printDebug("Top level conflict detected by parser");
+        return NULL;
+    }
 }

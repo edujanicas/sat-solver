@@ -5,12 +5,14 @@ V CLAUSEdeepCopy(V clause) {
     //TODO
 }
 
-bool CLAUSEnew(V literals, bool learnt, C output) {
+bool CLAUSEnew(V literals, bool learnt, C *output) {
     if (!learnt) {
         if (CLAUSEclean(literals)) {
             return true;
         }
     }
+
+    //TODO if both p and -p appear, return true
 
     CLAUSEremoveDuplicates(literals);
 
@@ -18,27 +20,28 @@ bool CLAUSEnew(V literals, bool learnt, C output) {
         return false;
 
     if (VECTORtotal(literals) == 1) {
+        printDebug("enqueueing unit clause");
         enqueue((Var) VECTORget(literals, 0), NULL);
     } else {
-        output = malloc(sizeof(struct clause));
-        output->learnt = learnt;
-        output->activity = 0;
+        *output = malloc(sizeof(struct clause));
+        (*output)->literals = literals;
+        (*output)->learnt = learnt;
+        (*output)->activity = 0;
 
         if (learnt) {
             //TODO: see SAT.pseudo
         }
 
         //adding to watchers of literals[0, 1]
-        addToWatchersOf(output, ((Var) VECTORget(literals, 0)));
-        addToWatchersOf(output, ((Var) VECTORget(literals, 1)));
+        addToWatchersOf(*output, ((Var) VECTORget(literals, 0)));
+        addToWatchersOf(*output, ((Var) VECTORget(literals, 1)));
     }
 
     return true;
 }
 
 bool CLAUSEclean(V literals) {
-    int i = 0;
-    for (i = 0; i < VECTORtotal(literals); i++) {
+    for (unsigned int i = 0; i < VECTORtotal(literals); i++) {
         Var currentVar = VECTORget(literals, i);
         if (value(currentVar) == true) {
             return true;
@@ -51,10 +54,9 @@ bool CLAUSEclean(V literals) {
 }
 
 void CLAUSEremoveDuplicates(V literals) {
-    int i = 0, j = 0;
-    for (i = 0; i < VECTORtotal(literals); i++) {
+    for (unsigned int i = 0; i < VECTORtotal(literals); i++) {
         Var currentVar = VECTORget(literals, i);
-        for (j = i + 1; j < VECTORtotal(literals); j++) {
+        for (unsigned int j = i + 1; j < VECTORtotal(literals); j++) {
             Var comparisonVar = VECTORget(literals, j);
             if (currentVar->id == comparisonVar->id && currentVar->sign == comparisonVar->sign) {
                 VECTORdelete(literals, j);

@@ -15,7 +15,7 @@ typedef struct clause {
 
 bool CLAUSEclean(V literals);
 
-bool CLAUSEnew(V literals, bool learnt, C output);
+bool CLAUSEnew(V literals, bool learnt, C *output);
 
 void CLAUSEremoveDuplicates(V literals);
 

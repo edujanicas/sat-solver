@@ -124,9 +124,8 @@ sat.c
 					return clause;
 				}
 			}
-
-			return NULL;s
 		}
+		return NULL;
 	}
 
 var.c

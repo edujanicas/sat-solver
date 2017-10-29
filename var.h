@@ -14,7 +14,6 @@ typedef struct var *Var;
 struct var {
     unsigned int id;    // Unique variable > 0 (literal) id (Eg.: 1, 2, 3)
     bool sign;          // true = positive, false = negated, unassigned = not defined
-    bool value;         // Assigned value (True, False, None)
 };
 
 Var VARinit(unsigned int id, bool sign);

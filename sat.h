@@ -16,6 +16,7 @@ Q propagationQ;
 
 // --- Assignments
 unsigned int numberOfLiterals;
+unsigned int numberOfClauses;
 bool *assignments;
 V trail;
 int *trail_lim;
@@ -28,18 +29,22 @@ bool conflict(V formula);
 
 bool allVarsAssigned();
 
-unsigned int decide();
+unsigned int selectVar();
+
+bool decide(unsigned int id);
 
 void change_decision(unsigned int assigned);
 
 void simplifyClause(V clause, V unitVars);
 
-V propagate();
+C propagate();
 
 void printAssignments();
 
 int solve(V formula);
 
 bool enqueue(Var p, C from);
+
+void initializeAssigments();
 
 #endif //SAT_SAT_H
