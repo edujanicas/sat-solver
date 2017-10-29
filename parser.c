@@ -1,6 +1,5 @@
 #include "parser.h"
 #include "debugPrinter.h"
-#include "sat.h"
 
 void badFormatted(char *message, char *details) {
     printf("ERROR: the file is badly formatted. %s%s<\n", message, details);
@@ -131,6 +130,7 @@ bool makeOutput(FILE *inputFile, V output) {
                 printDebug("unit clause enqueued, not adding\n");
             }
         } else {
+            printDebug("Top level conflict detected by parser\n");
             return false;
         }
 

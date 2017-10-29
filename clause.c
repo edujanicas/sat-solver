@@ -8,6 +8,7 @@ V CLAUSEdeepCopy(V clause) {
 bool CLAUSEnew(V literals, bool learnt, C *output) {
     if (!learnt) {
         if (CLAUSEclean(literals)) {
+            printDebug("clause is already satisfied");
             return true;
         }
     }
@@ -16,13 +17,18 @@ bool CLAUSEnew(V literals, bool learnt, C *output) {
 
     CLAUSEremoveDuplicates(literals);
 
-    if (VECTORtotal(literals) == 0)
+    if (VECTORtotal(literals) == 0) {
+        printDebug("clause is empty");
         return false;
+    }
 
     if (VECTORtotal(literals) == 1) {
         printDebug("enqueueing unit clause");
         enqueue((Var) VECTORget(literals, 0), NULL);
+        printDebugInt("assignment of ", ((Var) VECTORget(literals, 0))->id);
+        printDebugInt("is ", assignments[((Var) VECTORget(literals, 0))->id]);
     } else {
+        printDebug("allocating clause");
         *output = malloc(sizeof(struct clause));
         (*output)->literals = literals;
         (*output)->learnt = learnt;
@@ -44,6 +50,10 @@ bool CLAUSEclean(V literals) {
     for (unsigned int i = 0; i < VECTORtotal(literals); i++) {
         Var currentVar = VECTORget(literals, i);
         if (value(currentVar) == true) {
+            printDebugVar("in CLAUSEclean, true for var ", currentVar);
+            printDebugInt("in CLAUSEclean, for opposite ", value(neg(currentVar)));
+            printDebugInt("assignment of ", currentVar->id);
+            printDebugInt("is ", assignments[currentVar->id]);
             return true;
         } else if (value(currentVar) == false) {
             VECTORdelete(literals, i);

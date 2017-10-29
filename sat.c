@@ -71,7 +71,7 @@ void change_decision(unsigned int assigned) {
 
 //returns false on conflict, true on succesfull enqueueing
 bool enqueue(Var p, C from) {
-    printDebugVar("Enqueueing for propagation: " ,p);
+    printDebugVar("Enqueueing for propagation: ", p);
     if (value(p) == false) {
         //conflict
         return false;
@@ -79,7 +79,7 @@ bool enqueue(Var p, C from) {
         //already assigned
         return true;
     } else {
-        assignments[p->id] = neg(p)->sign;
+        assignments[p->id] = p->sign;
         //TODO: decision levels, reasoning list, trail
         //level = sat.c :: decisionLevel();
         //level = sat.c :: reason[p->id] = from;
@@ -307,6 +307,10 @@ int main(int argc, char **argv) {
     }
 
     V cnf = initialize(argv[1]);
+    if (cnf == NULL) {
+        printf("UNSAT\n");
+        exit(EXIT_SUCCESS);
+    }
 
     printDebug("-----RUNNING DPLL-----");
     int result = solve(cnf);
