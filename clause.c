@@ -32,6 +32,8 @@ bool CLAUSEnew(V literals, bool learnt, C output) {
         addToWatchersOf(output, ((Var) VECTORget(literals, 0)));
         addToWatchersOf(output, ((Var) VECTORget(literals, 1)));
     }
+
+    return true;
 }
 
 bool CLAUSEclean(V literals) {

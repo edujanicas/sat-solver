@@ -10,16 +10,23 @@
 #include "queue.h"
 #include "clause.h"
 
-unsigned int numberOfLiterals;
-bool *assignments;
+// --- Propagation
 V *watchers;
 Q propagationQ;
 
+// --- Assignments
+unsigned int numberOfLiterals;
+bool *assignments;
+V trail;
+int *trail_lim;
+int trail_lim_size;
+
+// --- Solver Functions
 bool value(Var p);
 
-int conflict(V formula);
+bool conflict(V formula);
 
-int allVarsAssigned();
+bool allVarsAssigned();
 
 unsigned int decide();
 

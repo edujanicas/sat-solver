@@ -1,18 +1,17 @@
 #include "sat.h"
 
 bool value(Var p) {
-    if (p->id <= numberOfLiterals) {
+    if (p->id <= numberOfLiterals && assignments[p->id] != unassigned) {
         if (p->sign == true) {
             return assignments[p->id];
-        } else if ((p->sign == false))
+        } else if (p->sign == false)
             return !assignments[p->id];
-        return unassigned;
     }
     return unassigned;
 }
 
-int conflict(V formula) {
-    // Check if there are no all false or clauses
+bool conflict(V formula) {
+    // Check if there is at least one clause whose literals are all false
     for (int i = 0; i < VECTORtotal(formula); i++) {
         int flag = false;
 
@@ -23,15 +22,19 @@ int conflict(V formula) {
             if (assignments[currentVar->id] == unassigned ||
                 value(currentVar) == true) {
                 flag = true;
+
+                break;
             }
         }
-
+        // Each literal of currentClause is false
         if (flag == false) return true;
     }
+
+    // There are no clauses whose literals are all false
     return false;
 }
 
-int allVarsAssigned() {
+bool allVarsAssigned() {
     for (unsigned int i = 1; i <= numberOfLiterals; i++) {
         if (assignments[i] == unassigned) return false;
     }
@@ -39,10 +42,17 @@ int allVarsAssigned() {
 }
 
 unsigned int decide() {
-
+    // TODO: Add heuristic to choose variable
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
-            assignments[id] = true;
+            
+            trail_lim_size++;
+            trail_lim = realloc(trail_lim, sizeof(int) * trail_lim_size);
+            trail_lim[trail_lim_size - 1] = VECTORtotal(trail);
+
+            // Dummy variable to store the id
+            enqueue(VARinit(id, false), NULL);
+
             return id;
         }
     }
@@ -67,7 +77,8 @@ bool enqueue(Var p, C from) {
         //TODO: decision levels, reasoning list, trail
         //level = sat.c :: decisionLevel();
         //level = sat.c :: reason[p->id] = from;
-        //level = QUEUEinsertsat.c :: trail, p);
+        VECTORadd(trail, p);
+
         QUEUEinsert(propagationQ, p);
         return true;
     }
@@ -132,6 +143,21 @@ V propagate(V formula) {
 }
 */
 
+void cancel() {
+
+    // c is the difference between the total number of assignments and and first assignment of the 
+    // current level, i.e., the number of assignments to cancel
+    int c = VECTORtotal(trail) - trail_lim[trail_lim_size--];
+    for (; c != 0; c--) {
+        // Get the last element from the trail vector (last assignment)
+        Var p = VECTORget(trail, VECTORtotal(trail) - 1);
+        // p is null
+        assignments[p->id] = unassigned;
+        VECTORpop(trail);
+    }
+
+}
+
 void printAssignments() {
 
     for (unsigned int i = 1; i <= numberOfLiterals; i++) {
@@ -143,18 +169,53 @@ void printAssignments() {
 }
 
 int solve(V formula) {
-    V new_formula = formula;
-    if (!conflict(new_formula) && allVarsAssigned()) {
-        return true;
-    } else if (conflict(new_formula)) {
-        return false;
-    }
-    unsigned int assigned = decide();
-    if (solve(new_formula)) {
-        return true;
-    } else {
-        change_decision(assigned);
-        return solve(new_formula);
+
+    // Current assigned variable
+    unsigned int assigned = 0;
+    bool conf = false;
+
+    while(true) {
+
+        // TODO: new_formula = propagate(formula)
+        V new_formula = formula;
+
+        if (conf && trail_lim_size == 0) {
+            // FIXME: Workarround spot before having propagate
+            // Correct place for this check will be next to the other ifs
+
+            // Trail size = 0 means we are at the root level
+            // Top level conflict!
+            return false;
+        }
+
+        // Check for conflicts
+        conf = conflict(new_formula);
+
+        if (!conf && allVarsAssigned()) {
+            
+            return true;
+
+        } 
+        /* else if (conf && trail_lim_size == 0) {
+            // Trail size = 0 means we are at the root level
+            // Top level conflict!
+            return false;
+
+        } */ 
+        else if (conf) {
+            // Conflict in the middle of the tree
+            // TODO: Analize the conflict and learn something
+            // TODO: Non chronological backtracking
+            if(assignments[assigned] == true) change_decision(assigned);
+            else cancel();
+
+        } else {
+            // No conflicts
+
+            // TODO: Simplify DB if on top level
+            // TODO: Reduce the number of learnt clauses to avoid size issues
+            assigned = decide();
+        }    
     }
 }
 
@@ -167,14 +228,17 @@ int main(int argc, char **argv) {
 
     V cnf = parse(argv[1]);
 
-    assignments = (bool *) malloc(sizeof(bool) * numberOfLiterals + sizeof(bool));
-
+    // Initialize the assignments vector. Each literal is indexed at its id (0 index unused)
+    assignments = (bool*) malloc(sizeof(bool) * numberOfLiterals + sizeof(bool));
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         assignments[i] = unassigned;
     }
 
-    watchers = (V *) malloc(sizeof(V) * numberOfLiterals);
+    // Trail vector will keep track of each assignment, to backtrack
+    trail = VECTORinit();    
+    trail_lim_size = 0;
 
+    watchers = (V*) malloc(sizeof(V) * numberOfLiterals);
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         watchers[i] = VECTORinit();
     }
