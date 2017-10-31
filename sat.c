@@ -149,7 +149,7 @@ void cancel() {
 
     // c is the difference between the total number of assignments and and first assignment of the 
     // current level, i.e., the number of assignments to cancel
-    int c = VECTORtotal(trail) - trail_lim[trail_lim_size--];
+    int c = VECTORtotal(trail) - trail_lim[--trail_lim_size];
     for (; c != 0; c--) {
         // Get the last element from the trail vector (last assignment)
         Var p = VECTORget(trail, VECTORtotal(trail) - 1);
@@ -215,56 +215,6 @@ int solve(V formula) {
     }
 }
 
-//TODO: KILL ME {
-//OLD SOLVE()
-/*
-    // TODO: new_formula = propagate(formula)
-    V new_formula = formula;
-
-    if(propagate() != NULL)
-
-
-    if (conf && trail_lim_size == 0) {
-        // FIXME: Workarround spot before having propagate
-        // Correct place for this check will be next to the other ifs
-
-        // Trail size = 0 means we are at the root level
-        // Top level conflict!
-        return false;
-    }
-
-    // Check for conflicts
-    conf = conflict(new_formula);
-
-    if (!conf && allVarsAssigned()) {
-
-        return true;
-
-    }
-         else if (conf && trail_lim_size == 0) {
-            // Trail size = 0 means we are at the root level
-            // Top level conflict!
-            return false;
-
-        }
-    else if (conf) {
-        // Conflict in the middle of the tree
-        // TODO: Analize the conflict and learn something
-        // TODO: Non chronological backtracking
-        if (assignments[assigned] == true) change_decision(assigned);
-        else cancel();
-
-    } else {
-        // No conflicts
-
-        // TODO: Simplify DB if on top level
-        // TODO: Reduce the number of learnt clauses to avoid size issues
-        assigned = decide();
-    }
-    //TODO: }
-*/
-
-
 void initializeAssigments() {
     assignments = (bool *) malloc(sizeof(bool) * numberOfLiterals + sizeof(bool));
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
@@ -273,12 +223,13 @@ void initializeAssigments() {
 }
 
 void initializeTrail() {
+    // Trail vector will keep track of each assignment, to backtrack
     trail = VECTORinit();
     trail_lim_size = 0;
 }
 
 void initializeWatchers() {
-    watchers = (V *) malloc(sizeof(V) * numberOfLiterals + sizeof(V));
+    watchers = (V*) malloc(sizeof(V) * numberOfLiterals + sizeof(V));
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         watchers[i] = VECTORinit();
     }
