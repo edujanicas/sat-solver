@@ -97,7 +97,7 @@ bool CLAUSEpropagate(C clause, Var p) {
     }
 
     //else look for another variable to watch
-    for (int i = 2; i < VECTORtotal(clause->literals); i++) {
+    for (unsigned int i = 2; i < VECTORtotal(clause->literals); i++) {
         Var currentVar = VECTORget(clause->literals, i);
         if (value(currentVar) != false) {
             VECTORset(clause->literals, i, currentVar);

@@ -100,7 +100,7 @@ bool makeOutput(FILE *inputFile, V output) {
         do {
             readInt = readNumberUntilSpace(inputFile, &lastReadChar);
             printDebugInt("read  ", readInt);
-            if (abs(readInt) < 0 || abs(readInt) > numberOfLiterals) {
+            if (abs(readInt) < 0 || (unsigned int)abs(readInt) > numberOfLiterals) {
                 badFormatted("not a valid literal", "");
             }
 
@@ -139,6 +139,7 @@ bool makeOutput(FILE *inputFile, V output) {
     if (lastReadChar != EOF)
         printDebugInt("WARNING: EOF not reached. Number of clauses parsed parsed correctly: ",
                       numberOfClauses);
+    return true;
 }
 
 int readHeaderParameter(FILE *inputFile) {

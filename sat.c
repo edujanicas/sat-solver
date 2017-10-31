@@ -12,13 +12,13 @@ bool value(Var p) {
 
 bool conflict(V formula) {
     // Check if there is at least one clause whose literals are all false
-    for (int i = 0; i < VECTORtotal(formula); i++) {
-        int flag = false;
+    for (unsigned int i = 0; i < VECTORtotal(formula); i++) {
+        bool flag = false;
 
         C currentClause = VECTORget(formula, i);
         V currentLiterals = currentClause->literals;
 
-        for (int j = 0; j < VECTORtotal(currentLiterals); j++) {
+        for (unsigned int j = 0; j < VECTORtotal(currentLiterals); j++) {
             Var currentVar = VECTORget(currentLiterals, j);
             if (assignments[currentVar->id] == unassigned ||
                 value(currentVar) == true) {
@@ -54,7 +54,7 @@ unsigned int selectVar() {
 
 bool decide(unsigned int id) {
     trail_lim_size++;
-    trail_lim = realloc(trail_lim, sizeof(int) * trail_lim_size);
+    trail_lim = realloc(trail_lim, sizeof(unsigned int) * trail_lim_size);
     trail_lim[trail_lim_size - 1] = VECTORtotal(trail);
 
     //TODO why false?
@@ -110,7 +110,7 @@ C propagate() {
     printDebugInt("Propagation starting, queue size: ", propagationQ->size);
     while (propagationQ->size > 0) {
         Var propagatingVar = QUEUEdequeue(propagationQ);
-        int numberOfWatchers = watchers[propagatingVar->id]->total;
+        unsigned int numberOfWatchers = watchers[propagatingVar->id]->total;
 
         printDebugVar("Propagating of ", propagatingVar);
 
@@ -149,7 +149,7 @@ void cancel() {
 
     // c is the difference between the total number of assignments and and first assignment of the 
     // current level, i.e., the number of assignments to cancel
-    int c = VECTORtotal(trail) - trail_lim[--trail_lim_size];
+    unsigned int c = VECTORtotal(trail) - trail_lim[--trail_lim_size];
     for (; c != 0; c--) {
         // Get the last element from the trail vector (last assignment)
         Var p = VECTORget(trail, VECTORtotal(trail) - 1);
@@ -174,7 +174,6 @@ int solve(V formula) {
 
     // Currently last assigned variable
     unsigned int lastAssigned = 0;
-    bool conf = false;
 
     while (true) {
         printFormula(formula);

@@ -12,19 +12,19 @@
 typedef struct vector *V;
 typedef struct vector {
     void **items;
-    int capacity;
-    int total;
+    unsigned int capacity;
+    unsigned int total;
 } vector;
 
 V VECTORinit();
-int VECTORtotal(V);
-void VECTORresize(V, int);
+unsigned int VECTORtotal(V);
+void VECTORresize(V, unsigned int);
 void VECTORadd(V, void *);
-void VECTORset(V, int, void *);
-void* VECTORget(V, int);
-void VECTORdelete(V, int);
+void VECTORset(V, unsigned int, void *);
+void* VECTORget(V, unsigned int);
+void VECTORdelete(V, unsigned int);
 void VECTORpop(V);
-void VECTORshrink(V, int n);
+void VECTORshrink(V, unsigned int n);
 void VECTORfree(V);
 V VECTORshallowCopy(V);
 

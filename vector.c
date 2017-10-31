@@ -8,12 +8,12 @@ V VECTORinit() {
     return v;
 }
 
-int VECTORtotal(V v)
+unsigned int VECTORtotal(V v)
 {
     return v->total;
 }
 
-void VECTORresize(V v, int capacity)
+void VECTORresize(V v, unsigned int capacity)
 {
     void **items = realloc(v->items, sizeof(void *) * capacity);
     if (items) {
@@ -29,27 +29,27 @@ void VECTORadd(V v, void *item)
     v->items[v->total++] = item;
 }
 
-void VECTORset(V v, int index, void *item)
+void VECTORset(V v, unsigned int index, void *item)
 {
-    if (index >= 0 && index < v->total)
+    if (index < v->total)
         v->items[index] = item;
 }
 
-void *VECTORget(V v, int index)
+void *VECTORget(V v, unsigned int index)
 {
-    if (index >= 0 && index < v->total)
+    if (index < v->total)
         return v->items[index];
     return NULL;
 }
 
-void VECTORdelete(V v, int index)
+void VECTORdelete(V v, unsigned int index)
 {
-    if (index < 0 || index >= v->total)
+    if (index >= v->total)
         return;
 
     v->items[index] = NULL;
 
-    for (int i = index; i < v->total - 1; i++) {
+    for (unsigned int i = index; i < v->total - 1; i++) {
         v->items[i] = v->items[i + 1];
         v->items[i + 1] = NULL;
     }
@@ -65,9 +65,9 @@ void VECTORpop(V v)
     VECTORdelete(v, v->total - 1);
 }
 
-void VECTORshrink(V v, int n)
+void VECTORshrink(V v, unsigned int n)
 {
-    for(int i = 0; i < n; i++) {
+    for(unsigned int i = 0; i < n; i++) {
       VECTORdelete(v, v->total - 1);
     }
 }
@@ -81,7 +81,7 @@ V VECTORshallowCopy(V v)
 {
     V copy = VECTORinit();
 
-    for (int i = 0; i < VECTORtotal(v); ++i) {
+    for (unsigned int i = 0; i < VECTORtotal(v); ++i) {
         VECTORadd(copy, VECTORget(v, i));
     }
 
