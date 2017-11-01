@@ -22,6 +22,13 @@ V trail;
 int *trail_lim;
 int trail_lim_size;
 
+// --- Backtrack and learning
+C *reason;
+
+// --- Decision level
+int currentDecisionLevel;
+int *level;
+
 // --- Solver Functions
 bool value(Var p);
 
@@ -36,6 +43,8 @@ bool decide(unsigned int id);
 void change_decision(unsigned int assigned);
 
 void simplifyClause(V clause, V unitVars);
+
+void undoOne();
 
 C propagate();
 
