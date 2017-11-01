@@ -114,3 +114,19 @@ bool CLAUSEpropagate(C clause, Var p) {
 void addToWatchersOf(C clause, Var p) {
     VECTORadd(watchers[p->id], clause);
 }
+
+V CLAUSEreasonFor(C clause, Var p) {
+    //ASSUMPTION: p is null or literals[0]
+    int i;
+    V reasonForP = VECTORinit();
+
+    if (p == NULL) {
+        i = 0;
+    } else {
+        i = 1;
+    }
+    V literals = clause->literals;
+    for (; i < VECTORtotal(literals); i++) {
+        VECTORadd(reasonForP, neg((Var) VECTORget(literals, i)));
+    }
+}

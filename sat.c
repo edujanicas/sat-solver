@@ -10,6 +10,7 @@ bool value(Var p) {
     return unassigned;
 }
 
+//TODO KILL ME?
 bool conflict(V formula) {
     // Check if there is at least one clause whose literals are all false
     for (unsigned int i = 0; i < VECTORtotal(formula); i++) {
@@ -66,7 +67,13 @@ bool decide(unsigned int id) {
 }
 
 void change_decision(unsigned int assigned) {
-    assignments[assigned] = false;
+    if (assignments[assigned] == true) {
+        level[assigned] = currentDecisionLevel;
+        assignments[assigned] = false;
+    } else if (assignments[assigned] == false) {
+        level[assigned] = currentDecisionLevel;
+        assignments[assigned] = true;
+    }
 }
 
 //returns false on conflict, true on succesfull enqueueing
@@ -80,9 +87,9 @@ bool enqueue(Var p, C from) {
         return true;
     } else {
         assignments[p->id] = p->sign;
-        //TODO: decision levels, reasoning list, trail
-        //level = sat.c :: decisionLevel();
-        //level = sat.c :: reason[p->id] = from;
+
+        level[p->id] = currentDecisionLevel;
+        reason[p->id] = from;
         VECTORadd(trail, p);
 
         QUEUEinsert(propagationQ, p);
@@ -90,22 +97,6 @@ bool enqueue(Var p, C from) {
     }
 }
 
-/*
-// TODO: KILL ME
-void simplifyClause(V clause, V unitVars) {
-    for (int i = 0; i < VECTORtotal(clause); ++i) {
-        Var currentVar = VECTORget(clause, i);
-
-        for (int j = 0; j < VECTORtotal(unitVars); ++j) {
-            Var unitVar = VECTORget(unitVars, j);
-
-            if (currentVar->id == unitVar->id) {
-                currentVar->value = unitVar->sign;
-            }
-        }
-    }
-}
-*/
 C propagate() {
     printDebugInt("Propagation starting, queue size: ", propagationQ->size);
     while (propagationQ->size > 0) {
@@ -145,17 +136,21 @@ C propagate() {
     return NULL;
 }
 
+void undoOne() {
+    // Get the last element from the trail vector (last assignment)
+    Var p = VECTORget(trail, VECTORtotal(trail) - 1);
+    // p is null
+    assignments[p->id] = unassigned;
+    VECTORpop(trail);
+}
+
 void cancel() {
 
     // c is the difference between the total number of assignments and and first assignment of the 
     // current level, i.e., the number of assignments to cancel
     unsigned int c = VECTORtotal(trail) - trail_lim[--trail_lim_size];
     for (; c != 0; c--) {
-        // Get the last element from the trail vector (last assignment)
-        Var p = VECTORget(trail, VECTORtotal(trail) - 1);
-        // p is null
-        assignments[p->id] = unassigned;
-        VECTORpop(trail);
+        undoOne();
     }
 
 }
@@ -221,6 +216,20 @@ void initializeAssigments() {
     }
 }
 
+void initializeLevel() {
+    level = (int *) malloc(sizeof(int) * numberOfLiterals + sizeof(int));
+    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
+        level[i] = -1;
+    }
+}
+
+void initializeReason() {
+    reason = (C *) malloc(sizeof(C) * numberOfLiterals + sizeof(C));
+    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
+        level[i] = NULL;
+    }
+}
+
 void initializeTrail() {
     // Trail vector will keep track of each assignment, to backtrack
     trail = VECTORinit();
@@ -228,7 +237,7 @@ void initializeTrail() {
 }
 
 void initializeWatchers() {
-    watchers = (V*) malloc(sizeof(V) * numberOfLiterals + sizeof(V));
+    watchers = (V *) malloc(sizeof(V) * numberOfLiterals + sizeof(V));
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         watchers[i] = VECTORinit();
     }
@@ -239,8 +248,12 @@ V initialize(char *path) {
     FILE *inputFile = PARSERinit(path);
     PARSEheader(inputFile);
 
+    currentDecisionLevel = 0;
+
     initializeAssigments();
     initializeTrail();
+    initializeLevel();
+    initializeReason();
 
     propagationQ = QUEUEinit();
 

@@ -92,11 +92,8 @@ sat.c
 			if(value(p) == true) //already propagated
 				return true
 		} else {
-			//I dont understand why negated signe [Mario]
-			assignments[p->value()] = !p->sign()
+			assignments[p->value()] = p->sign()
 		}
-
-		//TODO
 	}
 
 	bool value(Var p){
@@ -126,6 +123,68 @@ sat.c
 			}
 		}
 		return NULL;
+	}
+
+	/*
+		Starting with the conflict clause and null p, expand the reasoning 
+		that led to a conflict for all variables of this level but one.
+		(But one b/c it has been proven heuristically valid)
+
+		The next clauses are the reasons for the last lits on the trail
+
+		You expand lits by getting the negation of all the conflict clause at first, and for every other clause negation of all the lits
+		but the first (its the one that led to the clause being unit)
+
+		Then every time you encounter a literal in the clauses negations,
+		if its not from level 0 or from the last one, you add it to the
+		clause to be learnt (start from 1, out[0] will be the last lit 
+		took from the trail)
+
+		the backtrack level is the max level in which added vars were
+		decided
+		
+		For some reason (?) it will not undo past current decision level
+	*/
+	int analyze(C conflictClause, @Output Array<Var> learntClauseLits) {
+		p = "null_literal"
+		backtrackLevel = 0;
+		count = 0;
+		seen[]
+
+		//returns the negation of all literals in conflictClause
+
+		do {
+
+			VECTORclear(reason_p)
+			if(conflictClause != NULL) {
+				reason_p = CLAUSEreasonFor(conflictClause, p);
+				
+				for (Var q : reason_p) {
+					if (! encountered[p->id]) {
+						encountered[p->id] = true;
+						if ("q has this decision level")
+							count ++ 
+
+						if ("0 < q decision level < current decision level")
+							"add q to learntClauseLits"
+
+						backtrackLevel = max(backtrackLevel, "q decision level")
+					}
+				}
+			}	
+			//select next literal and conflict clause(first unseen literal in trail)
+			do {
+				p = "last item in trail"
+				confl = reason[p->id]
+
+				//how do we know we won't undo the trail past this level?
+				undoOne();
+			} while (!seen[p->id])
+			counter --;
+
+		} while (counter > 0);
+
+		return backtrackLevel;
 	}
 
 var.c

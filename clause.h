@@ -25,4 +25,6 @@ bool CLAUSEpropagate(C clause, Var p);
 
 void addToWatchersOf(C clause, Var p);
 
+V CLAUSEreasonFor(C clause, Var p);
+
 #endif //SAT_CLAUSE_H
