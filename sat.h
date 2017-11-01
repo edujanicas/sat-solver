@@ -27,9 +27,10 @@ int trail_lim_size;
 
 // --- Backtrack and learning
 C *reason;
+int rootLevel;
+V learnts;
 
 // --- Decision level
-int currentDecisionLevel;
 int *level;
 
 // --- Solver Functions
@@ -56,6 +57,8 @@ void printAssignments();
 int solve(V formula);
 
 bool enqueue(Var p, C from);
+
+int currentDecisionLevel();
 
 void initializeAssigments();
 

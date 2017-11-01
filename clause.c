@@ -129,4 +129,5 @@ V CLAUSEreasonFor(C clause, Var p) {
     for (; i < VECTORtotal(literals); i++) {
         VECTORadd(reasonForP, neg((Var) VECTORget(literals, i)));
     }
+    return reasonForP;
 }

@@ -10,6 +10,10 @@ bool value(Var p) {
     return unassigned;
 }
 
+int currentDecisionLevel() {
+    return trail_lim_size;
+}
+
 //TODO KILL ME?
 bool conflict(V formula) {
     // Check if there is at least one clause whose literals are all false
@@ -68,10 +72,10 @@ bool decide(unsigned int id) {
 
 void change_decision(unsigned int assigned) {
     if (assignments[assigned] == true) {
-        level[assigned] = currentDecisionLevel;
+        level[assigned] = currentDecisionLevel();
         assignments[assigned] = false;
     } else if (assignments[assigned] == false) {
-        level[assigned] = currentDecisionLevel;
+        level[assigned] = currentDecisionLevel();
         assignments[assigned] = true;
     }
 }
@@ -88,7 +92,7 @@ bool enqueue(Var p, C from) {
     } else {
         assignments[p->id] = p->sign;
 
-        level[p->id] = currentDecisionLevel;
+        level[p->id] = currentDecisionLevel();
         reason[p->id] = from;
         VECTORadd(trail, p);
 
@@ -162,6 +166,11 @@ void cancel() {
 
 }
 
+void cancelUntil(int level) {
+    while (currentDecisionLevel() > level)
+        cancel();
+}
+
 void printAssignments() {
 
     for (unsigned int i = 1; i <= numberOfLiterals; i++) {
@@ -170,6 +179,14 @@ void printAssignments() {
         if (i != numberOfLiterals) printf(" ");
     }
     printf("\n");
+}
+
+void learn(V learntClauseVars) {
+    C clause = NULL;
+    CLAUSEnew(learntClauseVars, true, &clause);
+    enqueue(VECTORget(clause->literals, 0), clause);
+    if (clause != NULL)
+        VECTORadd(learnts, clause);
 }
 
 int analyze(C conflictClause, V learntClauseLits) {
@@ -194,7 +211,7 @@ int analyze(C conflictClause, V learntClauseLits) {
                 if (!seen[q->id]) {
                     seen[q->id] = true;
 
-                    if (level[q->id] == currentDecisionLevel) {
+                    if (level[q->id] == currentDecisionLevel()) {
                         count++;
                     } else if (level[q->id > 0]) {
                         VECTORadd(learntClauseLits, q);
@@ -235,8 +252,15 @@ int solve(V formula) {
                 //top level conflict
                 return false;
             }
-            // TODO: Analize the conflict and learn something
-            // TODO: Non chronological backtracking
+
+            V learntClauseVars = VECTORinit();
+
+            int backtrackTo = analyze(conflictingClause, learntClauseVars);
+
+            cancelUntil(max(backtrackTo, rootLevel));
+
+            learn(learntClauseVars);
+
 
             if (assignments[lastAssigned] == true) {
                 printDebugInt("Assigned false to ", lastAssigned);
@@ -280,7 +304,7 @@ void initializeLevel() {
 void initializeReason() {
     reason = (C *) malloc(sizeof(C) * numberOfLiterals + sizeof(C));
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
-        level[i] = NULL;
+        reason[i] = NULL;
     }
 }
 
@@ -302,16 +326,19 @@ V initialize(char *path) {
     FILE *inputFile = PARSERinit(path);
     PARSEheader(inputFile);
 
-    currentDecisionLevel = 0;
 
     initializeAssigments();
     initializeTrail();
     initializeLevel();
     initializeReason();
 
+    learnts = VECTORinit();
+
     propagationQ = QUEUEinit();
 
     initializeWatchers();
+
+    rootLevel = currentDecisionLevel();
 
     return PARSEformula(inputFile);
 }
