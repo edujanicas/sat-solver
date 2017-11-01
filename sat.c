@@ -196,41 +196,50 @@ int analyze(C conflictClause, V learntClauseLits) {
     int count = 0;
     bool seen[numberOfLiterals];
 
+    //first position will be set last
+    VECTORadd(learntClauseLits, NULL);
+
     for (int i = 0; i < numberOfLiterals; i++) {
         seen[i] = false;
     }
 
     do {
         VECTORfree(reasonForP);
-        if (conflictClause != NULL) {
-            reasonForP = CLAUSEreasonFor(conflictClause, p);
+        printDebug("Cycle started");
+        reasonForP = CLAUSEreasonFor(conflictClause, p);
 
-            //expand reasoning for p
-            for (int i = 0; i < VECTORtotal(reasonForP); i++) {
-                Var q = VECTORget(reasonForP, i);
-                if (!seen[q->id]) {
-                    seen[q->id] = true;
+        printDebug("Expanding reasoning");
+        //expand reasoning for p
+        for (int i = 0; i < VECTORtotal(reasonForP); i++) {
+            Var q = VECTORget(reasonForP, i);
+            if (!seen[q->id]) {
+                seen[q->id] = true;
 
-                    if (level[q->id] == currentDecisionLevel()) {
-                        count++;
-                    } else if (level[q->id > 0]) {
-                        VECTORadd(learntClauseLits, q);
-                        backtrackLevel = max(backtrackLevel, level[q->id]);
-                    }
+                if (level[q->id] == currentDecisionLevel()) {
+                    count++;
+                } else if (level[q->id > 0]) {
+                    VECTORadd(learntClauseLits, q);
+                    backtrackLevel = max(backtrackLevel, level[q->id]);
                 }
             }
-
-            //select next p
-            do {
-                p = VECTORget(trail, VECTORtotal(trail) - 1);
-                VECTORpop(trail);
-                conflictClause = reason[p->id];
-                undoOne();
-            } while (!seen[p->id]);
-
-            count--;
         }
+
+        printDebug("Selecting next p");
+        //select next p
+        do {
+            p = VECTORget(trail, VECTORtotal(trail) - 1);
+            VECTORpop(trail);
+            conflictClause = reason[p->id];
+            undoOne();
+            printDebugInt("Trail size: ", VECTORtotal(trail));
+        } while (!seen[p->id]);
+
+        printDebug("next p selected");
+        count--;
+
     } while (count > 0);
+
+    VECTORset(learntClauseLits, 0, neg(p));
 
     return backtrackLevel;
 }
@@ -246,9 +255,9 @@ int solve(V formula) {
         C conflictingClause = propagate();
 
         if (conflictingClause != NULL) {
-            printDebugInt("Conflict at level", trail_lim_size);
+            printDebugInt("Conflict at level", currentDecisionLevel());
             //conflict
-            if (trail_lim_size == 0) {
+            if (currentDecisionLevel() == 0) {
                 //top level conflict
                 return false;
             }
@@ -257,10 +266,13 @@ int solve(V formula) {
 
             int backtrackTo = analyze(conflictingClause, learntClauseVars);
 
+            printDebug("Analyzed conflict");
+
             cancelUntil(max(backtrackTo, rootLevel));
 
             learn(learntClauseVars);
 
+            printDebug("Learnt conflict clause");
 
             if (assignments[lastAssigned] == true) {
                 printDebugInt("Assigned false to ", lastAssigned);
