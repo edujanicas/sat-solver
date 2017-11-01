@@ -10,6 +10,9 @@
 #include "queue.h"
 #include "clause.h"
 
+// --- BECAUSE C
+#define max(X, Y)  ((X) > (Y) ? (X) : (Y))
+
 // --- Propagation
 V *watchers;
 Q propagationQ;

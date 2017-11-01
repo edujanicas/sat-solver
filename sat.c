@@ -139,8 +139,15 @@ C propagate() {
 void undoOne() {
     // Get the last element from the trail vector (last assignment)
     Var p = VECTORget(trail, VECTORtotal(trail) - 1);
-    // p is null
-    assignments[p->id] = unassigned;
+    int id = p->id;
+
+    assignments[id] = unassigned;
+    reason[id] = NULL;
+    level[id] = -1;
+
+    //reset p in orders of variables
+    //unbind(p);
+
     VECTORpop(trail);
 }
 
@@ -165,6 +172,52 @@ void printAssignments() {
     printf("\n");
 }
 
+int analyze(C conflictClause, V learntClauseLits) {
+    Var p = NULL;
+    V reasonForP = VECTORinit();
+    int backtrackLevel = 0;
+    int count = 0;
+    bool seen[numberOfLiterals];
+
+    for (int i = 0; i < numberOfLiterals; i++) {
+        seen[i] = false;
+    }
+
+    do {
+        VECTORfree(reasonForP);
+        if (conflictClause != NULL) {
+            reasonForP = CLAUSEreasonFor(conflictClause, p);
+
+            //expand reasoning for p
+            for (int i = 0; i < VECTORtotal(reasonForP); i++) {
+                Var q = VECTORget(reasonForP, i);
+                if (!seen[q->id]) {
+                    seen[q->id] = true;
+
+                    if (level[q->id] == currentDecisionLevel) {
+                        count++;
+                    } else if (level[q->id > 0]) {
+                        VECTORadd(learntClauseLits, q);
+                        backtrackLevel = max(backtrackLevel, level[q->id]);
+                    }
+                }
+            }
+
+            //select next p
+            do {
+                p = VECTORget(trail, VECTORtotal(trail) - 1);
+                VECTORpop(trail);
+                conflictClause = reason[p->id];
+                undoOne();
+            } while (!seen[p->id]);
+
+            count--;
+        }
+    } while (count > 0);
+
+    return backtrackLevel;
+}
+
 int solve(V formula) {
 
     // Currently last assigned variable
@@ -184,6 +237,7 @@ int solve(V formula) {
             }
             // TODO: Analize the conflict and learn something
             // TODO: Non chronological backtracking
+
             if (assignments[lastAssigned] == true) {
                 printDebugInt("Assigned false to ", lastAssigned);
                 change_decision(lastAssigned);

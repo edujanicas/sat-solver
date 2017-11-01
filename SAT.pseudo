@@ -151,12 +151,13 @@ sat.c
 		count = 0;
 		seen[]
 
-		//returns the negation of all literals in conflictClause
-
 		do {
 
 			VECTORclear(reason_p)
 			if(conflictClause != NULL) {
+
+				//returns the negation of all literals in conflictClause
+				//minus the first if p != NULL as the first one is p
 				reason_p = CLAUSEreasonFor(conflictClause, p);
 				
 				for (Var q : reason_p) {
@@ -165,13 +166,13 @@ sat.c
 						if ("q has this decision level")
 							count ++ 
 
-						if ("0 < q decision level < current decision level")
+						if ("0 < q decision level < current decision level") {
 							"add q to learntClauseLits"
-
-						backtrackLevel = max(backtrackLevel, "q decision level")
+							backtrackLevel = max(backtrackLevel, "q decision level")
+						}
 					}
 				}
-			}	
+			}
 			//select next literal and conflict clause(first unseen literal in trail)
 			do {
 				p = "last item in trail"
@@ -180,9 +181,9 @@ sat.c
 				//how do we know we won't undo the trail past this level?
 				undoOne();
 			} while (!seen[p->id])
-			counter --;
+			count --;
 
-		} while (counter > 0);
+		} while (count > 0);
 
 		return backtrackLevel;
 	}
