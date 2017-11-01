@@ -42,14 +42,39 @@ bool allVarsAssigned() {
     return true;
 }
 
+void staticVarOrder() {
+
+    // Clear activity
+    for(unsigned int i = 1; i <= numberOfLiterals; i++) activity[i] = 0;
+
+    // Simple variable activity heuristic
+    for(unsigned int i = 0; i < VECTORtotal(cnf); i++) {
+        
+        C c = VECTORget(cnf, i);
+        double add = 2^(-VECTORtotal(c->literals));
+        for(unsigned int j = 0; j < VECTORtotal(c->literals); j++) {
+            Var v = VECTORget(c->literals, j);
+            activity[v->id] += add;
+        }
+
+    }
+
+}
+
 unsigned int selectVar() {
-    // TODO: Add heuristic to choose variable
+    
+    double maxActivity = 0;
+    unsigned int maxId = 0;
+
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
-            return id;
+            if(maxActivity < activity[id]) {
+                maxActivity = activity[id];
+                maxId = id;
+            }
         }
     }
-    return 0;
+    return maxId;
 }
 
 bool decide(unsigned int id) {
@@ -160,6 +185,26 @@ void cancel() {
 
 }
 
+void varBumpActivity(Var v) {
+    
+    if(activity[v->id] += var_inc >= 1e100) varRescaleActivity();
+    activity[v->id] *= var_inc;
+
+}
+
+void varRescaleActivity() {
+    
+    for(unsigned int i = 1; i<=numberOfLiterals; i++) activity[i] *= VARINC;
+    var_inc *= VARINC;
+
+}
+
+void varDecayActivity() {
+
+    var_inc *= var_decay;
+
+}
+
 void printAssignments() {
 
     for (unsigned int i = 1; i <= numberOfLiterals; i++) {
@@ -174,6 +219,7 @@ int solve(V formula) {
 
     // Currently last assigned variable
     unsigned int lastAssigned = 0;
+    var_decay = VARDECAY;
 
     while (true) {
         printFormula(formula);
@@ -195,6 +241,7 @@ int solve(V formula) {
             } else {
                 cancel();
             }
+            varDecayActivity();
         } else {
             //no conflict
             if (allVarsAssigned()) {
@@ -203,7 +250,10 @@ int solve(V formula) {
 
             // TODO: Simplify DB if on top level
             // TODO: Reduce the number of learnt clauses to avoid size issues
+            
+            staticVarOrder();
             lastAssigned = selectVar();
+            
             if (lastAssigned > 0) {
                 decide(lastAssigned);
             } else {
@@ -234,6 +284,13 @@ void initializeWatchers() {
     }
 }
 
+void initializeActivities() {
+    activity = (double *) malloc(sizeof(double) * numberOfLiterals + sizeof(double));
+    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
+        activity[i] = 0;
+    }
+}
+
 V initialize(char *path) {
 
     FILE *inputFile = PARSERinit(path);
@@ -245,6 +302,7 @@ V initialize(char *path) {
     propagationQ = QUEUEinit();
 
     initializeWatchers();
+    initializeActivities();
 
     return PARSEformula(inputFile);
 }
@@ -256,7 +314,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    V cnf = initialize(argv[1]);
+    cnf = initialize(argv[1]);
     if (cnf == NULL) {
         printf("UNSAT\n");
         exit(EXIT_SUCCESS);

@@ -10,9 +10,20 @@
 #include "queue.h"
 #include "clause.h"
 
+#define VARDECAY 1
+#define VARINC 1e-100 
+
+V cnf;
+
 // --- Propagation
 V *watchers;
 Q propagationQ;
+
+// --- Ordering
+
+double *activity;
+double var_inc;
+double var_decay;
 
 // --- Assignments
 unsigned int numberOfLiterals;
@@ -46,5 +57,11 @@ int solve(V formula);
 bool enqueue(Var p, C from);
 
 void initializeAssigments();
+
+void varBumpActivity(Var v);
+
+void varDecayActivity();
+
+void varRescaleActivity();
 
 #endif //SAT_SAT_H
