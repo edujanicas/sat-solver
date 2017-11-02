@@ -37,8 +37,9 @@ void checkStartSequence(FILE *inputFile) {
         } else {
             if (readChar == 'c') {
                 readChar = fgetc(inputFile);
-                if (readChar == ' ') {
-                    skipLine(inputFile);
+                if (isSeparator(readChar)) {
+                    if (readChar != '\n')
+                        skipLine(inputFile);
                     fileStart = "p cnf ";
                     continue;
                 } else {
@@ -100,7 +101,7 @@ bool makeOutput(FILE *inputFile, V output) {
         do {
             readInt = readNumberUntilSpace(inputFile, &lastReadChar);
             printDebugInt("read  ", readInt);
-            if (abs(readInt) < 0 || (unsigned int)abs(readInt) > numberOfLiterals) {
+            if (abs(readInt) < 0 || (unsigned int) abs(readInt) > numberOfLiterals) {
                 badFormatted("not a valid literal", "");
             }
 
@@ -162,7 +163,7 @@ FILE *PARSERinit(char *path) {
     return inputFile;
 }
 
-void PARSEheader(FILE * inputFile) {
+void PARSEheader(FILE *inputFile) {
 
     numberOfLiterals = readHeaderParameter(inputFile);
 
@@ -172,7 +173,7 @@ void PARSEheader(FILE * inputFile) {
 V PARSEformula(FILE *inputFile) {
     V output = VECTORinit();
 
-    if(makeOutput(inputFile, output)) {
+    if (makeOutput(inputFile, output)) {
 
         printFormula(output);
 

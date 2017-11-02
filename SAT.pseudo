@@ -27,8 +27,6 @@ clause.c
 			if(learnt) {
 				"if learnt set the second watched literal (the first one is random) to
 					be the literal with the highest decision level"
-					//will also need the cause data type for remembering wathced lits
-					//maybe, minisat remembers it as "literals in position 0 and 1"
 				sat.c :: bumpActivity("this clause") 
 				for (p : literals)	
 					sat.c :: bumpActivityVar(p)

@@ -60,11 +60,14 @@ unsigned int selectVar() {
 bool decide(unsigned int id) {
     trail_lim_size++;
     trail_lim = realloc(trail_lim, sizeof(unsigned int) * trail_lim_size);
+
+    printDebugInt("Trail lim size: ", trail_lim_size);
     trail_lim[trail_lim_size - 1] = VECTORtotal(trail);
 
-    //TODO why false?
+    printDebugInt("--------- LEVEL ", currentDecisionLevel());
+
     // Dummy variable to store the id
-    Var decidingVar = VARinit(id, false);
+    Var decidingVar = VARinit(id, true);
 
     printDebugVar("Assigned true to ", decidingVar);
     return enqueue(decidingVar, NULL);
@@ -143,6 +146,7 @@ C propagate() {
 void undoOne() {
     // Get the last element from the trail vector (last assignment)
     Var p = VECTORget(trail, VECTORtotal(trail) - 1);
+    printDebugInt("accessing: ", VECTORtotal(trail) - 1);
     int id = p->id;
 
     assignments[id] = unassigned;
@@ -169,6 +173,7 @@ void cancel() {
 void cancelUntil(int level) {
     while (currentDecisionLevel() > level)
         cancel();
+    printDebugInt("trail_lim_size: ", trail_lim_size);
 }
 
 void printAssignments() {
@@ -184,9 +189,10 @@ void printAssignments() {
 void learn(V learntClauseVars) {
     C clause = NULL;
     CLAUSEnew(learntClauseVars, true, &clause);
-    enqueue(VECTORget(clause->literals, 0), clause);
-    if (clause != NULL)
+    if (clause != NULL) {
+        enqueue(VECTORget(clause->literals, 0), clause);
         VECTORadd(learnts, clause);
+    }
 }
 
 int analyze(C conflictClause, V learntClauseLits) {
@@ -203,9 +209,11 @@ int analyze(C conflictClause, V learntClauseLits) {
         seen[i] = false;
     }
 
+    printDebugInt("Trail size: ", VECTORtotal(trail));
+
     do {
         VECTORfree(reasonForP);
-        printDebug("Cycle started");
+        printDebug("Main learning cycle started");
         reasonForP = CLAUSEreasonFor(conflictClause, p);
 
         printDebug("Expanding reasoning");
@@ -214,10 +222,11 @@ int analyze(C conflictClause, V learntClauseLits) {
             Var q = VECTORget(reasonForP, i);
             if (!seen[q->id]) {
                 seen[q->id] = true;
+                printDebugVar("\tFound new variable: ", q);
 
                 if (level[q->id] == currentDecisionLevel()) {
                     count++;
-                } else if (level[q->id > 0]) {
+                } else if (level[q->id] > 0) {
                     VECTORadd(learntClauseLits, q);
                     backtrackLevel = max(backtrackLevel, level[q->id]);
                 }
@@ -229,15 +238,19 @@ int analyze(C conflictClause, V learntClauseLits) {
         do {
             p = VECTORget(trail, VECTORtotal(trail) - 1);
             VECTORpop(trail);
+            if(VECTORtotal(trail) <= trail_lim[trail_lim_size - 1])
+                break;
             conflictClause = reason[p->id];
             undoOne();
-            printDebugInt("Trail size: ", VECTORtotal(trail));
+
         } while (!seen[p->id]);
 
-        printDebug("next p selected");
+        printDebugVar("Next p is: ", p);
+        printDebugInt("Trail size: ", VECTORtotal(trail));
+        printDebugInt("Counter: ", count);
         count--;
 
-    } while (count > 0);
+    } while (count > 0 && VECTORtotal(trail) > trail_lim[trail_lim_size - 1]);
 
     VECTORset(learntClauseLits, 0, neg(p));
 
@@ -270,16 +283,12 @@ int solve(V formula) {
 
             cancelUntil(max(backtrackTo, rootLevel));
 
+            printDebugInt("Backtracked until: ", max(backtrackTo, rootLevel));
+
             learn(learntClauseVars);
 
             printDebug("Learnt conflict clause");
 
-            if (assignments[lastAssigned] == true) {
-                printDebugInt("Assigned false to ", lastAssigned);
-                change_decision(lastAssigned);
-            } else {
-                cancel();
-            }
         } else {
             //no conflict
             if (allVarsAssigned()) {
@@ -288,9 +297,11 @@ int solve(V formula) {
 
             // TODO: Simplify DB if on top level
             // TODO: Reduce the number of learnt clauses to avoid size issues
+            printDebug("Selecting new var");
             lastAssigned = selectVar();
             if (lastAssigned > 0) {
                 decide(lastAssigned);
+                printDebug("Selected new var");
             } else {
                 printDebug("No more variables to assign");
                 return false;

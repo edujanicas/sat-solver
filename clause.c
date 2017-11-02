@@ -11,11 +11,9 @@ bool CLAUSEnew(V literals, bool learnt, C *output) {
             printDebug("clause is already satisfied");
             return true;
         }
+
+        CLAUSEremoveDuplicates(literals);
     }
-
-    //TODO if both p and -p appear, return true
-
-    CLAUSEremoveDuplicates(literals);
 
     if (VECTORtotal(literals) == 0) {
         printDebug("clause is empty");
@@ -25,8 +23,6 @@ bool CLAUSEnew(V literals, bool learnt, C *output) {
     if (VECTORtotal(literals) == 1) {
         printDebug("enqueueing unit clause");
         enqueue((Var) VECTORget(literals, 0), NULL);
-        printDebugInt("assignment of ", ((Var) VECTORget(literals, 0))->id);
-        printDebugInt("is ", assignments[((Var) VECTORget(literals, 0))->id]);
     } else {
         printDebug("allocating clause");
         *output = malloc(sizeof(struct clause));
@@ -35,7 +31,15 @@ bool CLAUSEnew(V literals, bool learnt, C *output) {
         (*output)->activity = 0;
 
         if (learnt) {
-            //TODO: see SAT.pseudo
+            int maxLevelLiteralIndex = 0;
+            int maxLevel = 0;
+            for(unsigned int i = 0; i < VECTORtotal(literals); i ++) {
+                if(level[((Var) VECTORget(literals, i))->id] > maxLevel) {
+                    maxLevel = level[((Var) VECTORget(literals, i))->id];
+                    maxLevelLiteralIndex = i;
+                }
+            }
+            VECTORswitchPlace(literals, 1, maxLevelLiteralIndex);
         }
 
         //adding to watchers of literals[0, 1]
@@ -60,6 +64,7 @@ bool CLAUSEclean(V literals) {
         }
     }
 
+    //TODO if both p and -p appear, return true
     return false;
 }
 
