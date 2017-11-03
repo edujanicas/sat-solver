@@ -108,6 +108,7 @@ bool CLAUSEpropagate(C clause, Var p) {
             VECTORset(clause->literals, i, currentVar);
             VECTORset(clause->literals, i, neg(p));
             addToWatchersOf(clause, currentVar);
+            return true;
         }
     }
 
