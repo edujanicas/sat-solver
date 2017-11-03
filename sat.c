@@ -77,14 +77,14 @@ void change_decision(unsigned int assigned) {
 
 //returns false on conflict, true on succesfull enqueueing
 bool enqueue(Var p, C from) {
-    printDebugVar("Enqueueing for propagation: ", p);
     if (value(p) == false) {
-        //conflict
+        printDebugVar("Conflicting, not enqueueing: ", p);
         return false;
     } else if (value(p) == true) {
-        //already assigned
+        printDebugVar("Already true, not enqueueing: ", p);
         return true;
     } else {
+        printDebugVar("Enqueueing for propagation: ", p);
         assignments[p->id] = p->sign;
 
         level[p->id] = currentDecisionLevel;
@@ -114,6 +114,8 @@ C propagate() {
         watchers[propagatingVar->id] = VECTORinit();
 
         for (unsigned int i = 0; i < numberOfWatchers; i++) {
+            printDebug("Clause before propagation: ");
+            printClause(propagationWatchers[i]);
             if (!CLAUSEpropagate(propagationWatchers[i], propagatingVar)) {
                 //clause was unit and conflicting, aborting
 
@@ -125,10 +127,15 @@ C propagate() {
                 //flushing propagationQ
                 QUEUEclear(propagationQ);
 
+                printDebug("Clause after propagation: ");
+                printClause(propagationWatchers[i]);
 
                 //and returning the conflicting clause
                 return propagationWatchers[i];
             }
+
+            printDebug("Clause after propagation: ");
+            printClause(propagationWatchers[i]);
         }
     }
 

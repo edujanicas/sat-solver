@@ -18,6 +18,8 @@ void printDebugChar(char *message, int value);
 
 void printDebugVar(char *message, Var var);
 
+void printClause(C clause);
+
 void printDebug(char *message);
 
 #endif
