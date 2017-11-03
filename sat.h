@@ -58,9 +58,13 @@ unsigned int selectVar();
 
 bool decide(unsigned int id);
 
+void addToWatchersOf(C clause, Var p);
+
 void change_decision(unsigned int assigned);
 
 void simplifyClause(V clause, V unitVars);
+
+V watchersOf(Var p);
 
 void undoOne();
 

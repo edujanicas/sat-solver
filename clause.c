@@ -33,8 +33,8 @@ bool CLAUSEnew(V literals, bool learnt, C *output) {
         if (learnt) {
             int maxLevelLiteralIndex = 0;
             int maxLevel = 0;
-            for(unsigned int i = 0; i < VECTORtotal(literals); i ++) {
-                if(level[((Var) VECTORget(literals, i))->id] > maxLevel) {
+            for (unsigned int i = 0; i < VECTORtotal(literals); i++) {
+                if (level[((Var) VECTORget(literals, i))->id] > maxLevel) {
                     maxLevel = level[((Var) VECTORget(literals, i))->id];
                     maxLevelLiteralIndex = i;
                 }
@@ -84,6 +84,8 @@ void CLAUSEremoveDuplicates(V literals) {
 bool CLAUSEpropagate(C clause, Var p) {
     //invariant: at the moment of the call the clause is not in watchers[p->id] anymore
 
+    printDebug("In CLAUSEpropagate of");
+    printClause(clause);
     Var negP = neg(p);
 
     //make sure -p is in literals[1]
@@ -119,14 +121,11 @@ bool CLAUSEpropagate(C clause, Var p) {
     // -4:_ 2:1,
     // Propagating of 2
     // Enqueueing for propagation: -4
-    
+
     addToWatchersOf(clause, p);
     return enqueue(VECTORget(clause->literals, 0), clause);
 }
 
-void addToWatchersOf(C clause, Var p) {
-    VECTORadd(watchers[p->id], clause);
-}
 
 V CLAUSEreasonFor(C clause, Var p) {
     //ASSUMPTION: p is null or literals[0]

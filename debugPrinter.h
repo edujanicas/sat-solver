@@ -10,6 +10,8 @@
 
 void printDebugInt(char *message, int value);
 
+void printClause(C clause);
+
 void printFormula(V formula);
 
 void printDebugIntInt(char *message, int value1, int value2);

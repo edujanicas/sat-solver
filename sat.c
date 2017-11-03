@@ -10,6 +10,24 @@ bool value(Var p) {
     return unassigned;
 }
 
+void addToWatchersOf(C clause, Var p) {
+    int id;
+    if (p->sign)
+        id = p->id;
+    else
+        id = -p->id;
+    VECTORadd(watchers[id], clause);
+}
+
+V watchersOf(Var p) {
+    int id;
+    if (p->sign)
+        id = p->id;
+    else
+        id = -p->id;
+    return watchers[id];
+}
+
 int currentDecisionLevel() {
     return trail_lim_size;
 }
@@ -135,7 +153,7 @@ C propagate() {
         printFormula(cnf);
 
         Var propagatingVar = QUEUEdequeue(propagationQ);
-        unsigned int numberOfWatchers = watchers[propagatingVar->id]->total;
+        unsigned int numberOfWatchers = watchersOf(propagatingVar)->total;
 
         printDebugVar("Propagating of ", propagatingVar);
 
@@ -143,10 +161,18 @@ C propagate() {
 
         //moving the watching clauses to a temporary vector
         for (unsigned int i = 0; i < numberOfWatchers; i++) {
-            propagationWatchers[i] = VECTORget(watchers[propagatingVar->id], i);
+            propagationWatchers[i] = VECTORget(watchersOf(propagatingVar), i);
         }
-        VECTORfree(watchers[propagatingVar->id]);
-        watchers[propagatingVar->id] = VECTORinit();
+        VECTORfree(watchersOf(propagatingVar));
+
+        int propagatingVarId;
+        if (propagatingVar->sign)
+            propagatingVarId = propagatingVar->id;
+        else
+            propagatingVarId = -propagatingVar->id;
+
+        //TODO does it work?
+        watchers[propagatingVarId] = VECTORinit();
 
         for (unsigned int i = 0; i < numberOfWatchers; i++) {
             if (!CLAUSEpropagate(propagationWatchers[i], propagatingVar)) {
@@ -154,7 +180,7 @@ C propagate() {
 
                 //adding back the watchers
                 for (unsigned int j = i + 1; j < numberOfWatchers; j++) {
-                    VECTORadd(watchers[propagatingVar->id], propagationWatchers[j]);
+                    VECTORadd(watchersOf(propagatingVar), propagationWatchers[j]);
                 }
 
                 //flushing propagationQ
@@ -322,9 +348,9 @@ int solve(V formula) {
 
         C conflictingClause = propagate();
 
-        if(conflictingClause == NULL) {
+        if (conflictingClause == NULL) {
             //no conflict
-            if(allVarsAssigned()) {
+            if (allVarsAssigned()) {
                 return true;
             } else {
                 //select a new var
@@ -378,54 +404,54 @@ int solve(V formula) {
             varDecayActivity();
         }
     }
-        //
-        /*
-        if (conflictingClause != NULL) {
-            printDebugInt("Conflict at level", currentDecisionLevel());
-            //conflict
-            if (currentDecisionLevel() == 0) {
-                //top level conflict
-                return false;
-            }
-
-
-
-            // TODO: Analize the conflict and learn something
-            // TODO: Non chronological backtracking
-
-            //invariant : lastAssignedVar will contain the decision variable of
-            //the deepest canceled level
-            if (lastAssignedVar != NULL) {
-                if (assignments[lastAssignedVar->id] == true) {
-                    printDebugVar("Assigned false to ", lastAssignedVar);
-                    change_decision(lastAssignedVar->id);
-                }
-                lastAssignedVar = NULL;
-            }
-            varDecayActivity();
-
-        } else {
-            //no conflict
-            if (allVarsAssigned()) {
-                return true;
-            }
-
-            // TODO: Simplify DB if on top level
-            // TODO: Reduce the number of learnt clauses to avoid size issues
-            printDebug("Selecting new var");
-
-            staticVarOrder();
-            varToDecide = selectVar();
-
-            if (varToDecide > 0) {
-                printDebugInt("Selected new var: ", varToDecide);
-                decide(varToDecide);
-            } else {
-                printDebug("No more variables to assign ");
-                return false;
-            }
+    //
+    /*
+    if (conflictingClause != NULL) {
+        printDebugInt("Conflict at level", currentDecisionLevel());
+        //conflict
+        if (currentDecisionLevel() == 0) {
+            //top level conflict
+            return false;
         }
-    }*/
+
+
+
+        // TODO: Analize the conflict and learn something
+        // TODO: Non chronological backtracking
+
+        //invariant : lastAssignedVar will contain the decision variable of
+        //the deepest canceled level
+        if (lastAssignedVar != NULL) {
+            if (assignments[lastAssignedVar->id] == true) {
+                printDebugVar("Assigned false to ", lastAssignedVar);
+                change_decision(lastAssignedVar->id);
+            }
+            lastAssignedVar = NULL;
+        }
+        varDecayActivity();
+
+    } else {
+        //no conflict
+        if (allVarsAssigned()) {
+            return true;
+        }
+
+        // TODO: Simplify DB if on top level
+        // TODO: Reduce the number of learnt clauses to avoid size issues
+        printDebug("Selecting new var");
+
+        staticVarOrder();
+        varToDecide = selectVar();
+
+        if (varToDecide > 0) {
+            printDebugInt("Selected new var: ", varToDecide);
+            decide(varToDecide);
+        } else {
+            printDebug("No more variables to assign ");
+            return false;
+        }
+    }
+}*/
 }
 
 void initializeAssigments() {
@@ -456,10 +482,12 @@ void initializeTrail() {
 }
 
 void initializeWatchers() {
-    watchers = (V *) malloc(sizeof(V) * numberOfLiterals + sizeof(V));
-    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
+    watchers = (V *) malloc(sizeof(V) * numberOfLiterals * 2 + sizeof(V));
+    for (unsigned int i = 0; i <= numberOfLiterals * 2; i++) {
         watchers[i] = VECTORinit();
     }
+
+    watchers = watchers + numberOfLiterals;
 }
 
 void initializeActivities() {
