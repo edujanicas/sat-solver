@@ -6,12 +6,20 @@ void printFormula(V formula) {
         printf("Printing %d clauses\n", formula->total);
         for (unsigned int i = 0; i < VECTORtotal(formula); i++) {
             C clause = VECTORget(formula, i);
+            if(clause->learnt == true)
+                printf("[L]  ");
+            else if(clause->learnt == false)
+                printf("[N] " );
             for (unsigned int j = 0; j < VECTORtotal(clause->literals); j++) {
                 Var var = VECTORget(clause->literals, j);
                 if (!var->sign)
-                    printf("-%d : %d, ", var->id, value(var));
+                    printf("-");
+                printf("%d:", var->id);
+                if(value(var) != unassigned)
+                    printf("%d, ", value(var));
                 else
-                    printf("%d : %d, ", var->id, value(var));
+                    printf("_");
+                printf(" ");
             }
             printDebug("\n\n");
         }
