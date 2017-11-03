@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "debugPrinter.h"
 
-void printFormula(V formula) {
+void printFormula(V formula) {/*
     if (IS_DEBUG) {
         printf("Printing %d clauses\n", formula->total);
         for (unsigned int i = 0; i < VECTORtotal(formula); i++) {
@@ -15,7 +15,7 @@ void printFormula(V formula) {
             }
             printDebug("\n\n");
         }
-    }
+    }*/
 }
 
 void printDebugInt(char *message, int value) {

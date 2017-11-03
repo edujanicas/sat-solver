@@ -29,6 +29,7 @@ int trail_lim_size;
 C *reason;
 int rootLevel;
 V learnts;
+Var lastDecisionUndone;
 
 // --- Decision level
 int *level;

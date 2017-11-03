@@ -146,7 +146,6 @@ C propagate() {
 void undoOne() {
     // Get the last element from the trail vector (last assignment)
     Var p = VECTORget(trail, VECTORtotal(trail) - 1);
-    printDebugInt("accessing: ", VECTORtotal(trail) - 1);
     int id = p->id;
 
     assignments[id] = unassigned;
@@ -163,7 +162,12 @@ void cancel() {
 
     // c is the difference between the total number of assignments and and first assignment of the 
     // current level, i.e., the number of assignments to cancel
+    printDebugInt("--------- Deleting level: ", currentDecisionLevel());
+    printDebugInt("Trail size: ", VECTORtotal(trail));
+    printDebugInt("Level to be deleted last trail address: ",trail_lim[trail_lim_size - 1]);
+    printDebugInt("Previous level last trail address: ",trail_lim[trail_lim_size - 2]);
     unsigned int c = VECTORtotal(trail) - trail_lim[--trail_lim_size];
+    printDebugInt("Reducing trail of: ",c);
     for (; c != 0; c--) {
         undoOne();
     }
@@ -237,7 +241,6 @@ int analyze(C conflictClause, V learntClauseLits) {
         //select next p
         do {
             p = VECTORget(trail, VECTORtotal(trail) - 1);
-            VECTORpop(trail);
             if(VECTORtotal(trail) <= trail_lim[trail_lim_size - 1])
                 break;
             conflictClause = reason[p->id];
@@ -281,9 +284,10 @@ int solve(V formula) {
 
             printDebug("Analyzed conflict");
 
-            cancelUntil(max(backtrackTo, rootLevel));
+            printDebugInt("Backtracking until: ", max(backtrackTo, rootLevel));
 
-            printDebugInt("Backtracked until: ", max(backtrackTo, rootLevel));
+
+            cancelUntil(max(backtrackTo, rootLevel));
 
             learn(learntClauseVars);
 
@@ -300,10 +304,10 @@ int solve(V formula) {
             printDebug("Selecting new var");
             lastAssigned = selectVar();
             if (lastAssigned > 0) {
+                printDebugInt("Selected new var: ", lastAssigned);
                 decide(lastAssigned);
-                printDebug("Selected new var");
             } else {
-                printDebug("No more variables to assign");
+                printDebug("No more variables to assign ");
                 return false;
             }
         }
