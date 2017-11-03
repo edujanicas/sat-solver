@@ -81,10 +81,9 @@ bool decide(unsigned int id) {
     trail_lim_size++;
     trail_lim = realloc(trail_lim, sizeof(unsigned int) * trail_lim_size);
     trail_lim[trail_lim_size - 1] = VECTORtotal(trail);
-
-    //TODO why false?
+    
     // Dummy variable to store the id
-    Var decidingVar = VARinit(id, false);
+    Var decidingVar = VARinit(id, true);
 
     printDebugVar("Assigned true to ", decidingVar);
     return enqueue(decidingVar, NULL);
