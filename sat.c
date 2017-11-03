@@ -522,6 +522,19 @@ V initialize(char *path) {
     return PARSEformula(inputFile);
 }
 
+
+void destroy() {
+    
+    free(activity);
+    free(assignments);
+    free(level);
+    VECTORfree(*watchers);
+    VECTORfree(learnts);
+
+    VECTORfree(cnf);
+}
+
+
 int main(int argc, char **argv) {
 
     if (argc != 2) {
@@ -545,7 +558,7 @@ int main(int argc, char **argv) {
         printf("UNSAT\n");
     }
 
-    VECTORfree(cnf);
+    destroy();
 
     exit(EXIT_SUCCESS);
 }
