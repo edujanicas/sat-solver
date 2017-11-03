@@ -11,7 +11,7 @@
 
 void badFormatted(char *message, char *details);
 
-int isSeparator(int character);
+int isSeparator(int character, FILE *inputFile);
 
 void checkStartSequence(FILE *inputFile);
 

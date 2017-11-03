@@ -43,8 +43,8 @@ bool CLAUSEnew(V literals, bool learnt, C *output) {
         }
 
         //adding to watchers of literals[0, 1]
-        addToWatchersOf(*output, ((Var) VECTORget(literals, 0)));
-        addToWatchersOf(*output, ((Var) VECTORget(literals, 1)));
+        addToWatchersOf(*output, neg((Var) VECTORget(literals, 0)));
+        addToWatchersOf(*output, neg((Var) VECTORget(literals, 1)));
     }
 
     return true;

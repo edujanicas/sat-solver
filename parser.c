@@ -2,13 +2,21 @@
 #include "debugPrinter.h"
 
 void badFormatted(char *message, char *details) {
-    printf("ERROR: the file is badly formatted. %s%s<\n", message, details);
+    printf("ERROR: the file is badly formatted. %s%s\n", message, details);
     exit(EXIT_FAILURE);
 }
 
-int isSeparator(int character) {
+int isSeparator(int character, FILE *inputFile) {
     if (isspace(character))
         return 1;
+    if (character == '\r') {
+        int readChar = fgetc(inputFile);
+        if (readChar == '\n') {
+            return 1;
+        } else {
+            badFormatted("","");
+        }
+    }
     if (character == '\n')
         return 1;
     if (character == '\t')
@@ -37,8 +45,8 @@ void checkStartSequence(FILE *inputFile) {
         } else {
             if (readChar == 'c') {
                 readChar = fgetc(inputFile);
-                if (isSeparator(readChar)) {
-                    if (readChar != '\n')
+                if (isSeparator(readChar, inputFile)) {
+                    if (readChar != '\n' && readChar != '\r')
                         skipLine(inputFile);
                     fileStart = "p cnf ";
                     continue;
@@ -50,7 +58,6 @@ void checkStartSequence(FILE *inputFile) {
             }
         }
     } while (*fileStart);
-
 }
 
 void readUntilSpace(FILE *inputFile, int *lastReadChar, char *readNumberChars) {
@@ -63,7 +70,7 @@ void readUntilSpace(FILE *inputFile, int *lastReadChar, char *readNumberChars) {
         else
             *(readNumberChars + i) = (char) readChar;
         i++;
-    } while (i < MAX_NUMBER_LENGTH && !isSeparator(readChar));
+    } while (i < MAX_NUMBER_LENGTH && !isSeparator(readChar, inputFile));
 
     if (i >= MAX_NUMBER_LENGTH)
         badFormatted("This parser only accepts numbers of length in characters up to: ", MAX_NUMBER_LENGTH_C);
@@ -95,6 +102,7 @@ bool makeOutput(FILE *inputFile, V output) {
     C tempClause = NULL;
     int lastReadChar = 0;
     int readInt;
+    int maxLitEncountered = 0;
 
     for (unsigned int i = 0; i < numberOfClauses; i++) {
         literals = VECTORinit();
@@ -108,10 +116,12 @@ bool makeOutput(FILE *inputFile, V output) {
             if (readInt != 0) {
                 tempVar = VARinit((unsigned int) abs(readInt), readInt > 0);
                 VECTORadd(literals, tempVar);
+                if (maxLitEncountered < tempVar->id)
+                    maxLitEncountered = tempVar->id;
                 printDebug("added\n");
             }
 
-            if (!isSeparator(lastReadChar)) {
+            if (!isSeparator(lastReadChar, inputFile)) {
                 badFormatted("", "");
             } else if (lastReadChar == EOF) {
                 if (i < numberOfClauses - 1) {
@@ -137,6 +147,9 @@ bool makeOutput(FILE *inputFile, V output) {
 
     }
 
+    if (maxLitEncountered != numberOfLiterals)
+        badFormatted("Not all the literals were encountered", "\n");
+
     if (lastReadChar != EOF)
         printDebugInt("WARNING: EOF not reached. Number of clauses parsed parsed correctly: ",
                       numberOfClauses);
@@ -146,7 +159,7 @@ bool makeOutput(FILE *inputFile, V output) {
 int readHeaderParameter(FILE *inputFile) {
     int lastReadChar;
     int parameter = readNumberUntilSpace(inputFile, &lastReadChar);
-    if (!isSeparator(lastReadChar))
+    if (!isSeparator(lastReadChar, inputFile))
         badFormatted("", "");
     else if (lastReadChar == EOF)
         badFormatted("Could not find number of clauses parameter", "");
