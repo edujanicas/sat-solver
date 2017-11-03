@@ -131,6 +131,9 @@ bool enqueue(Var p, C from) {
 C propagate() {
     printDebugInt("Propagation starting, queue size: ", propagationQ->size);
     while (propagationQ->size > 0) {
+
+        printFormula(cnf);
+
         Var propagatingVar = QUEUEdequeue(propagationQ);
         unsigned int numberOfWatchers = watchers[propagatingVar->id]->total;
 

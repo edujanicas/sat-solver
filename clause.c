@@ -89,6 +89,7 @@ bool CLAUSEpropagate(C clause, Var p) {
     //make sure -p is in literals[1]
     if (((Var) VECTORget(clause->literals, 0))->id == p->id &&
         ((Var) VECTORget(clause->literals, 0))->sign == negP->sign) {
+
         VECTORset(clause->literals, 0, VECTORget(clause->literals, 1));
         VECTORset(clause->literals, 1, neg(p));
     }
@@ -105,14 +106,20 @@ bool CLAUSEpropagate(C clause, Var p) {
     for (unsigned int i = 2; i < VECTORtotal(clause->literals); i++) {
         Var currentVar = VECTORget(clause->literals, i);
         if (value(currentVar) != false) {
-            VECTORset(clause->literals, i, currentVar);
+
+            VECTORset(clause->literals, 1, currentVar);
             VECTORset(clause->literals, i, neg(p));
-            addToWatchersOf(clause, currentVar);
+            addToWatchersOf(clause, neg(currentVar));
             return true;
         }
     }
 
     //if no watchable variable is found, clause is unit
+    // FIXME 
+    // -4:_ 2:1,
+    // Propagating of 2
+    // Enqueueing for propagation: -4
+    
     addToWatchersOf(clause, p);
     return enqueue(VECTORget(clause->literals, 0), clause);
 }
