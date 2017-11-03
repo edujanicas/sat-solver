@@ -286,7 +286,7 @@ int analyze(C conflictClause, V learntClauseLits) {
     //first position will be set last
     VECTORadd(learntClauseLits, NULL);
 
-    for (int i = 0; i < numberOfLiterals; i++) {
+    for (unsigned int i = 0; i < numberOfLiterals; i++) {
         seen[i] = false;
     }
 
@@ -299,7 +299,7 @@ int analyze(C conflictClause, V learntClauseLits) {
 
         printDebug("Expanding reasoning");
         //expand reasoning for p
-        for (int i = 0; i < VECTORtotal(reasonForP); i++) {
+        for (unsigned int i = 0; i < VECTORtotal(reasonForP); i++) {
             Var q = VECTORget(reasonForP, i);
             if (!seen[q->id]) {
                 seen[q->id] = true;
