@@ -13,9 +13,20 @@
 // --- BECAUSE C
 #define max(X, Y)  ((X) > (Y) ? (X) : (Y))
 
+#define VARDECAY 1
+#define VARINC 1e-100
+
+V cnf;
+
 // --- Propagation
 V *watchers;
 Q propagationQ;
+
+// --- Ordering
+
+double *activity;
+double var_inc;
+double var_decay;
 
 // --- Assignments
 unsigned int numberOfLiterals;
@@ -24,6 +35,8 @@ bool *assignments;
 V trail;
 int *trail_lim;
 int trail_lim_size;
+Var lastAssignedVar;
+bool lastAssignedValue;
 
 // --- Backtrack and learning
 C *reason;
@@ -62,5 +75,11 @@ bool enqueue(Var p, C from);
 int currentDecisionLevel();
 
 void initializeAssigments();
+
+void varBumpActivity(Var v);
+
+void varDecayActivity();
+
+void varRescaleActivity();
 
 #endif //SAT_SAT_H

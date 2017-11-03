@@ -47,14 +47,39 @@ bool allVarsAssigned() {
     return true;
 }
 
+void staticVarOrder() {
+
+    // Clear activity
+    for (unsigned int i = 1; i <= numberOfLiterals; i++) activity[i] = 0;
+
+    // Simple variable activity heuristic
+    for (unsigned int i = 0; i < VECTORtotal(cnf); i++) {
+
+        C c = VECTORget(cnf, i);
+        double add = 2 ^(-VECTORtotal(c->literals));
+        for (unsigned int j = 0; j < VECTORtotal(c->literals); j++) {
+            Var v = VECTORget(c->literals, j);
+            activity[v->id] += add;
+        }
+
+    }
+
+}
+
 unsigned int selectVar() {
-    // TODO: Add heuristic to choose variable
+
+    double maxActivity = 0;
+    unsigned int maxId = 0;
+
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
-            return id;
+            if (maxActivity < activity[id]) {
+                maxActivity = activity[id];
+                maxId = id;
+            }
         }
     }
-    return 0;
+    return maxId;
 }
 
 bool decide(unsigned int id) {
@@ -65,7 +90,6 @@ bool decide(unsigned int id) {
     trail_lim[trail_lim_size - 1] = VECTORtotal(trail);
 
     printDebugInt("--------- LEVEL ", currentDecisionLevel());
-
     // Dummy variable to store the id
     Var decidingVar = VARinit(id, true);
 
@@ -164,10 +188,14 @@ void cancel() {
     // current level, i.e., the number of assignments to cancel
     printDebugInt("--------- Deleting level: ", currentDecisionLevel());
     printDebugInt("Trail size: ", VECTORtotal(trail));
-    printDebugInt("Level to be deleted last trail address: ",trail_lim[trail_lim_size - 1]);
-    printDebugInt("Previous level last trail address: ",trail_lim[trail_lim_size - 2]);
+    printDebugInt("Level to be deleted first trail address: ", trail_lim[trail_lim_size - 1]);
+    printDebugInt("Previous level first trail address: ", trail_lim[trail_lim_size - 2]);
+
+    lastAssignedVar = VECTORget(trail, trail_lim[trail_lim_size - 1]);
+    lastAssignedValue = value(lastAssignedVar);
+
     unsigned int c = VECTORtotal(trail) - trail_lim[--trail_lim_size];
-    printDebugInt("Reducing trail of: ",c);
+    printDebugInt("Reducing trail of: ", c);
     for (; c != 0; c--) {
         undoOne();
     }
@@ -178,6 +206,26 @@ void cancelUntil(int level) {
     while (currentDecisionLevel() > level)
         cancel();
     printDebugInt("trail_lim_size: ", trail_lim_size);
+}
+
+void varBumpActivity(Var v) {
+
+    if (activity[v->id] += var_inc >= 1e100) varRescaleActivity();
+    activity[v->id] *= var_inc;
+
+}
+
+void varRescaleActivity() {
+
+    for (unsigned int i = 1; i <= numberOfLiterals; i++) activity[i] *= VARINC;
+    var_inc *= VARINC;
+
+}
+
+void varDecayActivity() {
+
+    var_inc *= var_decay;
+
 }
 
 void printAssignments() {
@@ -241,7 +289,7 @@ int analyze(C conflictClause, V learntClauseLits) {
         //select next p
         do {
             p = VECTORget(trail, VECTORtotal(trail) - 1);
-            if(VECTORtotal(trail) <= trail_lim[trail_lim_size - 1])
+            if (VECTORtotal(trail) <= trail_lim[trail_lim_size - 1])
                 break;
             conflictClause = reason[p->id];
             undoOne();
@@ -263,14 +311,36 @@ int analyze(C conflictClause, V learntClauseLits) {
 int solve(V formula) {
 
     // Currently last assigned variable
-    unsigned int lastAssigned = 0;
+    unsigned int varToDecide = 0;
+    var_decay = VARDECAY;
 
     while (true) {
         printFormula(formula);
 
         C conflictingClause = propagate();
 
-        if (conflictingClause != NULL) {
+        if(conflictingClause == NULL) {
+            //no conflict
+            if(allVarsAssigned()) {
+                return true;
+            } else {
+                //select a new var
+                printDebug("Selecting new var");
+
+                staticVarOrder();
+                varToDecide = selectVar();
+
+                if (varToDecide > 0) {
+                    printDebugInt("Selected new var: ", varToDecide);
+                    //assigne true to varToDecide
+                    decide(varToDecide);
+                } else {
+                    printDebug("No more variables to assign ");
+                    return false;
+                }
+            }
+        } else {
+            //conflict
             printDebugInt("Conflict at level", currentDecisionLevel());
             //conflict
             if (currentDecisionLevel() == 0) {
@@ -284,14 +354,52 @@ int solve(V formula) {
 
             printDebug("Analyzed conflict");
 
-            printDebugInt("Backtracking until: ", max(backtrackTo, rootLevel));
-
-
-            cancelUntil(max(backtrackTo, rootLevel));
-
             learn(learntClauseVars);
 
             printDebug("Learnt conflict clause");
+
+            printDebugInt("Backtracking until: ", max(backtrackTo, rootLevel));
+
+            cancelUntil(max(backtrackTo, rootLevel));
+
+            //invariant : lastAssignedVar will contain the decided variable of
+            //the deepest canceled level
+            if (lastAssignedVar != NULL) {
+                if (assignments[lastAssignedVar->id] == true) {
+                    printDebugVar("Assigned false to ", lastAssignedVar);
+                    change_decision(lastAssignedVar->id);
+                }
+                lastAssignedVar = NULL;
+            }
+
+            varDecayActivity();
+        }
+    }
+        //
+        /*
+        if (conflictingClause != NULL) {
+            printDebugInt("Conflict at level", currentDecisionLevel());
+            //conflict
+            if (currentDecisionLevel() == 0) {
+                //top level conflict
+                return false;
+            }
+
+
+
+            // TODO: Analize the conflict and learn something
+            // TODO: Non chronological backtracking
+
+            //invariant : lastAssignedVar will contain the decision variable of
+            //the deepest canceled level
+            if (lastAssignedVar != NULL) {
+                if (assignments[lastAssignedVar->id] == true) {
+                    printDebugVar("Assigned false to ", lastAssignedVar);
+                    change_decision(lastAssignedVar->id);
+                }
+                lastAssignedVar = NULL;
+            }
+            varDecayActivity();
 
         } else {
             //no conflict
@@ -302,16 +410,19 @@ int solve(V formula) {
             // TODO: Simplify DB if on top level
             // TODO: Reduce the number of learnt clauses to avoid size issues
             printDebug("Selecting new var");
-            lastAssigned = selectVar();
-            if (lastAssigned > 0) {
-                printDebugInt("Selected new var: ", lastAssigned);
-                decide(lastAssigned);
+
+            staticVarOrder();
+            varToDecide = selectVar();
+
+            if (varToDecide > 0) {
+                printDebugInt("Selected new var: ", varToDecide);
+                decide(varToDecide);
             } else {
                 printDebug("No more variables to assign ");
                 return false;
             }
         }
-    }
+    }*/
 }
 
 void initializeAssigments() {
@@ -348,6 +459,13 @@ void initializeWatchers() {
     }
 }
 
+void initializeActivities() {
+    activity = (double *) malloc(sizeof(double) * numberOfLiterals + sizeof(double));
+    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
+        activity[i] = 0;
+    }
+}
+
 V initialize(char *path) {
 
     FILE *inputFile = PARSERinit(path);
@@ -364,8 +482,11 @@ V initialize(char *path) {
     propagationQ = QUEUEinit();
 
     initializeWatchers();
+    initializeActivities();
 
     rootLevel = currentDecisionLevel();
+
+    lastAssignedVar = NULL;
 
     return PARSEformula(inputFile);
 }
@@ -377,7 +498,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    V cnf = initialize(argv[1]);
+    cnf = initialize(argv[1]);
     if (cnf == NULL) {
         printf("UNSAT\n");
         exit(EXIT_SUCCESS);
