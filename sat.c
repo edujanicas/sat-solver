@@ -32,32 +32,6 @@ int currentDecisionLevel() {
     return trail_lim_size;
 }
 
-//TODO KILL ME?
-bool conflict(V formula) {
-    // Check if there is at least one clause whose literals are all false
-    for (unsigned int i = 0; i < VECTORtotal(formula); i++) {
-        bool flag = false;
-
-        C currentClause = VECTORget(formula, i);
-        V currentLiterals = currentClause->literals;
-
-        for (unsigned int j = 0; j < VECTORtotal(currentLiterals); j++) {
-            Var currentVar = VECTORget(currentLiterals, j);
-            if (assignments[currentVar->id] == unassigned ||
-                value(currentVar) == true) {
-                flag = true;
-
-                break;
-            }
-        }
-        // Each literal of currentClause is false
-        if (flag == false) return true;
-    }
-
-    // There are no clauses whose literals are all false
-    return false;
-}
-
 bool allVarsAssigned() {
     for (unsigned int i = 1; i <= numberOfLiterals; i++) {
         if (assignments[i] == unassigned) return false;
@@ -75,13 +49,12 @@ void staticVarOrder() {
 
         C c = VECTORget(cnf, i);
         double add = 2 ^(-VECTORtotal(c->literals));
+        
         for (unsigned int j = 0; j < VECTORtotal(c->literals); j++) {
             Var v = VECTORget(c->literals, j);
             activity[v->id] += add;
         }
-
     }
-
 }
 
 unsigned int selectVar() {
@@ -209,6 +182,8 @@ void undoOne() {
     //unbind(p);
 
     VECTORpop(trail);
+
+    // FIXME UNDOS!!!!!!!
 }
 
 void cancel() {
@@ -393,65 +368,17 @@ int solve(V formula) {
 
             //invariant : lastAssignedVar will contain the decided variable of
             //the deepest canceled level
-            if (lastAssignedVar != NULL) {
-                if (assignments[lastAssignedVar->id] == true) {
-                    printDebugVar("Assigned false to ", lastAssignedVar);
-                    change_decision(lastAssignedVar->id);
-                }
-                lastAssignedVar = NULL;
-            }
+            //if (lastAssignedVar != NULL) {
+            //    if (assignments[lastAssignedVar->id] == true) {
+            //        printDebugVar("Assigned false to ", lastAssignedVar);
+            //        change_decision(lastAssignedVar->id);
+            //    }
+            //    lastAssignedVar = NULL;
+            //}
 
             varDecayActivity();
         }
     }
-    //
-    /*
-    if (conflictingClause != NULL) {
-        printDebugInt("Conflict at level", currentDecisionLevel());
-        //conflict
-        if (currentDecisionLevel() == 0) {
-            //top level conflict
-            return false;
-        }
-
-
-
-        // TODO: Analize the conflict and learn something
-        // TODO: Non chronological backtracking
-
-        //invariant : lastAssignedVar will contain the decision variable of
-        //the deepest canceled level
-        if (lastAssignedVar != NULL) {
-            if (assignments[lastAssignedVar->id] == true) {
-                printDebugVar("Assigned false to ", lastAssignedVar);
-                change_decision(lastAssignedVar->id);
-            }
-            lastAssignedVar = NULL;
-        }
-        varDecayActivity();
-
-    } else {
-        //no conflict
-        if (allVarsAssigned()) {
-            return true;
-        }
-
-        // TODO: Simplify DB if on top level
-        // TODO: Reduce the number of learnt clauses to avoid size issues
-        printDebug("Selecting new var");
-
-        staticVarOrder();
-        varToDecide = selectVar();
-
-        if (varToDecide > 0) {
-            printDebugInt("Selected new var: ", varToDecide);
-            decide(varToDecide);
-        } else {
-            printDebug("No more variables to assign ");
-            return false;
-        }
-    }
-}*/
 }
 
 void initializeAssigments() {
