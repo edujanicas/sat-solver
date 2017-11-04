@@ -5,7 +5,7 @@ bool value(Var p) {
         if (p->sign == true) {
             return assignments[p->id];
         } else if (p->sign == false)
-            return !assignments[p->id];
+            return !(assignments[p->id]);
     }
     return unassigned;
 }
@@ -58,14 +58,14 @@ void staticVarOrder() {
 
 unsigned int selectVar() {
 
-    double maxActivity = 0;
+    int maxActivity = 0;
     unsigned int maxId = 0;
 
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
             if (maxActivity <= activity[id]) {
                 maxActivity = activity[id];
-                maxId = id;
+                return id;
             }
         }
     }
@@ -85,16 +85,6 @@ bool decide(unsigned int id) {
 
     printDebugVar("Assigned true to ", decidingVar);
     return enqueue(decidingVar, NULL);
-}
-
-void change_decision(unsigned int assigned) {
-    if (assignments[assigned] == true) {
-        level[assigned] = currentDecisionLevel();
-        assignments[assigned] = false;
-    } else if (assignments[assigned] == false) {
-        level[assigned] = currentDecisionLevel();
-        assignments[assigned] = true;
-    }
 }
 
 //returns false on conflict, true on succesfull enqueueing
@@ -135,6 +125,7 @@ C propagate() {
         for (unsigned int i = 0; i < numberOfWatchers; i++) {
             propagationWatchers[i] = VECTORget(watchersOf(propagatingVar), i);
         }
+
         VECTORfree(watchersOf(propagatingVar));
 
         int propagatingVarId;
@@ -192,9 +183,6 @@ void cancel() {
     printDebugInt("Level to be deleted first trail address: ", trail_lim[trail_lim_size - 1]);
     printDebugInt("Previous level first trail address: ", trail_lim[trail_lim_size - 2]);
 
-    lastAssignedVar = VECTORget(trail, trail_lim[trail_lim_size - 1]);
-    lastAssignedValue = value(lastAssignedVar);
-
     unsigned int c = VECTORtotal(trail) - trail_lim[--trail_lim_size];
     printDebugInt("Reducing trail of: ", c);
     for (; c != 0; c--) {
@@ -250,22 +238,22 @@ void learn(V learntClauseVars) {
 
 int analyze(C conflictClause, V learntClauseLits) {
     Var p = NULL;
-    V reasonForP = VECTORinit();
+    V reasonForP;
     int backtrackLevel = 0;
     int count = 0;
-    bool seen[numberOfLiterals];
+    bool seen[numberOfLiterals + 1];
 
     //first position will be set last
-    VECTORadd(learntClauseLits, NULL);
+    //VECTORadd(learntClauseLits, NULL);
 
-    for (unsigned int i = 0; i < numberOfLiterals; i++) {
+    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         seen[i] = false;
     }
 
     printDebugInt("Trail size: ", VECTORtotal(trail));
 
     do {
-        VECTORfree(reasonForP);
+        // VECTORfree(reasonForP);
         printDebug("Main learning cycle started");
         reasonForP = CLAUSEreasonFor(conflictClause, p);
 
@@ -280,11 +268,14 @@ int analyze(C conflictClause, V learntClauseLits) {
                 if (level[q->id] == currentDecisionLevel()) {
                     count++;
                 } else if (level[q->id] > 0) {
-                    VECTORadd(learntClauseLits, q);
+                    //VECTORadd(learntClauseLits, neg(q));
                     backtrackLevel = max(backtrackLevel, level[q->id]);
                 }
             }
         }
+        VECTORfree(reasonForP);
+        
+        
 
         printDebug("Selecting next p");
         //select next p
@@ -304,7 +295,7 @@ int analyze(C conflictClause, V learntClauseLits) {
 
     } while (count > 0 && VECTORtotal(trail) > trail_lim[trail_lim_size - 1]);
 
-    VECTORset(learntClauseLits, 0, neg(p));
+    //VECTORset(learntClauseLits, 0, neg(p));
 
     return backtrackLevel;
 }
@@ -355,25 +346,13 @@ int solve(V formula) {
 
             printDebug("Analyzed conflict");
 
-            learn(learntClauseVars);
+            //learn(learntClauseVars);
 
             printDebug("Learnt conflict clause");
 
             printDebugInt("Backtracking until: ", max(backtrackTo, rootLevel));
 
             cancelUntil(max(backtrackTo, rootLevel));
-
-            //invariant : lastAssignedVar will contain the decided variable of
-            //the deepest canceled level
-            //if (lastAssignedVar != NULL) {
-            //    if (assignments[lastAssignedVar->id] == true) {
-            //        printDebugVar("Assigned false to ", lastAssignedVar);
-            //        change_decision(lastAssignedVar->id);
-            //    }
-            //    lastAssignedVar = NULL;
-            //}
-
-            varDecayActivity();
         }
     }
 }
@@ -415,7 +394,7 @@ void initializeWatchers() {
 }
 
 void initializeActivities() {
-    activity = (double *) malloc(sizeof(double) * numberOfLiterals + sizeof(double));
+    activity = (int *) malloc(sizeof(double) * numberOfLiterals + sizeof(int));
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         activity[i] = 0;
     }
@@ -452,8 +431,13 @@ void destroy() {
     free(activity);
     free(assignments);
     free(level);
-    VECTORfree(*watchers); // Iterate
+ 
     VECTORfree(learnts);
+   
+    watchers -= numberOfLiterals;
+    for (unsigned int i = 0; i <= numberOfLiterals * 2; i++) {
+        VECTORfree(watchers[i]);
+    }
 
     VECTORfree(cnf);
 }

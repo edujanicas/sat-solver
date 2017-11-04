@@ -14,7 +14,7 @@
 #define max(X, Y)  ((X) > (Y) ? (X) : (Y))
 
 #define VARDECAY 1
-#define VARINC 1e-100
+#define VARINC 1
 
 V cnf;
 
@@ -25,7 +25,7 @@ Q propagationQ;
 
 // --- Ordering
 
-double *activity;
+int *activity;
 double var_inc;
 double var_decay;
 

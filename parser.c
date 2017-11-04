@@ -7,19 +7,13 @@ void badFormatted(char *message, char *details) {
 }
 
 int isSeparator(int character, FILE *inputFile) {
-    if (isspace(character))
-        return 1;
-    if (character == '\r') {
-        int readChar = fgetc(inputFile);
-        if (readChar == '\n') {
-            return 1;
-        } else {
-            badFormatted("","");
-        }
-    }
     if (character == '\n')
         return 1;
     if (character == '\t')
+        return 1;
+    if (isspace(character))
+        return 1;
+    if (character == '\r')
         return 1;
     if (character == EOF)
         return 1;
@@ -46,7 +40,7 @@ void checkStartSequence(FILE *inputFile) {
             if (readChar == 'c') {
                 readChar = fgetc(inputFile);
                 if (isSeparator(readChar, inputFile)) {
-                    if (readChar != '\n' && readChar != '\r')
+                    if (readChar != '\n')
                         skipLine(inputFile);
                     fileStart = "p cnf ";
                     continue;
@@ -72,10 +66,15 @@ void readUntilSpace(FILE *inputFile, int *lastReadChar, char *readNumberChars) {
         i++;
     } while (i < MAX_NUMBER_LENGTH && !isSeparator(readChar, inputFile));
 
+    //while(isSeparator(readChar, inputFile)) {
+    //    readChar = fgetc(inputFile);
+    //}
+
+    *lastReadChar = readChar;
+    
     if (i >= MAX_NUMBER_LENGTH)
         badFormatted("This parser only accepts numbers of length in characters up to: ", MAX_NUMBER_LENGTH_C);
 
-    *lastReadChar = readChar;
 }
 
 int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
@@ -84,15 +83,21 @@ int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
 
     readUntilSpace(inputFile, lastReadChar, readNumberChars);
 
-    readNumber = strtol(readNumberChars, NULL, 0);
+    if(*lastReadChar == 13) {
+        fgetc(inputFile);
+    }
 
+    readNumber = strtol(readNumberChars, NULL, 0);
+    printDebugInt("Read number was: ", readNumber); 
+   
     /* Will fail at this point if
      *    strtol failed
      *    strtol did not attempt (this would not trigger a strtol fail)
      * */
-    //if (readNumber == 0 && (errno == EINVAL || errno == ERANGE )) // || !isdigit(readNumberChars[0])))
-    //    badFormatted("Expected a number, read: ", readNumberChars);
+    if (readNumber == 0 && (errno == EINVAL || errno == ERANGE || !isdigit(readNumberChars[0])))
+        badFormatted("Expected a number, read: ", readNumberChars);
 
+    free(readNumberChars);
     return readNumber;
 }
 
