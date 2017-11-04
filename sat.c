@@ -48,11 +48,10 @@ void staticVarOrder() {
     for (unsigned int i = 0; i < VECTORtotal(cnf); i++) {
 
         C c = VECTORget(cnf, i);
-        double add = 2 ^(-VECTORtotal(c->literals));
         
         for (unsigned int j = 0; j < VECTORtotal(c->literals); j++) {
             Var v = VECTORget(c->literals, j);
-            activity[v->id] += add;
+            activity[v->id] += 1;
         }
     }
 }
@@ -64,7 +63,7 @@ unsigned int selectVar() {
 
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
-            if (maxActivity < activity[id]) {
+            if (maxActivity <= activity[id]) {
                 maxActivity = activity[id];
                 maxId = id;
             }
@@ -182,8 +181,6 @@ void undoOne() {
     //unbind(p);
 
     VECTORpop(trail);
-
-    // FIXME UNDOS!!!!!!!
 }
 
 void cancel() {
@@ -317,6 +314,7 @@ int solve(V formula) {
     // Currently last assigned variable
     unsigned int varToDecide = 0;
     var_decay = VARDECAY;
+    staticVarOrder();
 
     while (true) {
         printFormula(formula);
@@ -331,7 +329,6 @@ int solve(V formula) {
                 //select a new var
                 printDebug("Selecting new var");
 
-                staticVarOrder();
                 varToDecide = selectVar();
 
                 if (varToDecide > 0) {
@@ -417,13 +414,6 @@ void initializeWatchers() {
     watchers = watchers + numberOfLiterals;
 }
 
-void initializeUndos() {
-    undos = (V *) malloc(sizeof(V) * numberOfLiterals + sizeof(V));
-    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
-        undos[i] = VECTORinit();
-    }
-}
-
 void initializeActivities() {
     activity = (double *) malloc(sizeof(double) * numberOfLiterals + sizeof(double));
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
@@ -462,7 +452,7 @@ void destroy() {
     free(activity);
     free(assignments);
     free(level);
-    VECTORfree(*watchers);
+    VECTORfree(*watchers); // Iterate
     VECTORfree(learnts);
 
     VECTORfree(cnf);

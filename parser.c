@@ -90,8 +90,8 @@ int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
      *    strtol failed
      *    strtol did not attempt (this would not trigger a strtol fail)
      * */
-    if (readNumber == 0 && (errno == EINVAL || errno == ERANGE )) // || !isdigit(readNumberChars[0])))
-        badFormatted("Expected a number, read: ", readNumberChars);
+    //if (readNumber == 0 && (errno == EINVAL || errno == ERANGE )) // || !isdigit(readNumberChars[0])))
+    //    badFormatted("Expected a number, read: ", readNumberChars);
 
     return readNumber;
 }
