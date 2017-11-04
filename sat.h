@@ -20,6 +20,7 @@ V cnf;
 
 // --- Propagation
 V *watchers;
+V *undos;
 Q propagationQ;
 
 // --- Ordering

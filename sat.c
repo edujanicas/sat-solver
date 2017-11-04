@@ -490,6 +490,13 @@ void initializeWatchers() {
     watchers = watchers + numberOfLiterals;
 }
 
+void initializeUndos() {
+    undos = (V *) malloc(sizeof(V) * numberOfLiterals + sizeof(V));
+    for (unsigned int i = 0; i <= numberOfLiterals; i++) {
+        undos[i] = VECTORinit();
+    }
+}
+
 void initializeActivities() {
     activity = (double *) malloc(sizeof(double) * numberOfLiterals + sizeof(double));
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
