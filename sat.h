@@ -34,8 +34,8 @@ unsigned int numberOfLiterals;
 unsigned int numberOfClauses;
 bool *assignments;
 V trail;
-int *trail_lim;
-int trail_lim_size;
+unsigned int *trail_lim;
+unsigned int trail_lim_size;
 Var lastAssignedVar;
 bool lastAssignedValue;
 

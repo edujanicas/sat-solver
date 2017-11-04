@@ -1,10 +1,6 @@
 #include "clause.h"
 #include "sat.h"
 
-V CLAUSEdeepCopy(V clause) {
-    //TODO
-}
-
 bool CLAUSEnew(V literals, bool learnt, C *output) {
     if (!learnt) {
         if (CLAUSEclean(literals)) {
@@ -129,7 +125,7 @@ bool CLAUSEpropagate(C clause, Var p) {
 
 V CLAUSEreasonFor(C clause, Var p) {
     //ASSUMPTION: p is null or literals[0]
-    int i;
+    unsigned int i;
     V reasonForP = VECTORinit();
 
     if (p == NULL) {

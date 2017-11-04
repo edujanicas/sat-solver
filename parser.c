@@ -90,7 +90,7 @@ int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
      *    strtol failed
      *    strtol did not attempt (this would not trigger a strtol fail)
      * */
-    if (readNumber == 0 && (errno == EINVAL || errno == ERANGE || !isdigit(readNumberChars[0])))
+    if (readNumber == 0 && (errno == EINVAL || errno == ERANGE )) // || !isdigit(readNumberChars[0])))
         badFormatted("Expected a number, read: ", readNumberChars);
 
     return readNumber;
@@ -102,7 +102,7 @@ bool makeOutput(FILE *inputFile, V output) {
     C tempClause = NULL;
     int lastReadChar = 0;
     int readInt;
-    int maxLitEncountered = 0;
+    unsigned int maxLitEncountered = 0;
 
     for (unsigned int i = 0; i < numberOfClauses; i++) {
         literals = VECTORinit();
