@@ -1,0 +1,100 @@
+\input{preamble}
+
+\begin{document}
+  \coverpage{SAT-solver}
+  
+  \section{Introduction}
+  
+  We present a compact SAT-solver based on the DPLL algorithm, with non-chronological backtracking, learning, and a simple heuristic to chose variables. The solver was built from scratch following the pattern of MiniSat\footnote{Niklas Een, Niklas Sörensson. An Extensible SAT-solver. In International Conferences on Theory and Applications of Satisfiability Testing (SAT 2003)}, that provides a high level design recommendation for users building their own SAT-solvers.\\
+  
+  \subsection{Solver overview}
+   The skeleton of the solver presents as it follows: \\
+   \begin{lstlisting}
+   int solve(V formula) {
+   	unsigned int varToDecide;
+    	staticVarOrder();
+    	while (true) {
+        	C conflictingClause = propagate();
+        	if (conflictingClause == NULL)
+            	if (allVarsAssigned()) return true; 
+                else decide(selectVar());	
+        	else {
+            	if (currentDecisionLevel() == 0) return false;
+            	V learntClauseVars = VECTORinit();
+            	int backtrackTo = analyze(conflictingClause, learntClauseVars);
+            	learn(learntClauseVars);
+            	cancelUntil(max(backtrackTo, rootLevel));
+        	}
+    	}
+	}
+	\end{lstlisting}
+    The formula that the solver works with is parsed from the DIMACS format, and trivial conflicts like: \[ (P \wedge \neg{P}) \]  are detected by the parser. This simple trick is not expensive and allows us to return \textsc{Unsat} very quickly to large but trivially \textsc{Unsat} formulas. The parser is also responsible to fill some variables, like \textit{numberOfLiterals} and many others. \\
+    Before we start iterating the solver, we order the variables through a simple heuristic we explain in the next section. We proceed to do unit propagation. If a conflict does not arrive, a variable is picked for assignment, or, if all variables are assigned, \textsc{Sat} is returned. If a confict does arrive, and it's not on the top level, it is analyzed, and a clause is learned from it, backtracking to the latest possible level. \\
+    
+    \subsection{Heuristic overview}
+    The chosen heuristic was a simple count over the existing clauses, choosing the variable which appears in the higher number of clauses. \\
+    
+    \newpage
+    
+    \section{Algorithm choice}
+    Most of the SAT solvers today are \textit{conflict-based SAT solvers}, based on \textsc{Grasp}, \textsc{Chaff} and \textsc{Minisat}. We followed that approach, as it is one of the most efficient ones and it was our first SAT-solver. \\
+    
+    \subsection{Representation}
+    \begin{multicols}{2}
+    \begin{lstlisting}
+        V cnf;
+        // --- Propagation
+        V *watchers;
+        V *undos;
+        Q propagationQ;
+        // --- Ordering
+        int *activity;
+        double var_inc;
+        double var_decay;
+        // --- Assignments
+        unsigned int numberOfLiterals;
+        unsigned int numberOfClauses;
+        bool *assignments;
+        V trail;
+        unsigned int *trail_lim;
+        unsigned int trail_lim_size;
+        Var lastAssignedVar;
+        bool lastAssignedValue;
+        // --- Backtrack and learning
+        C *reason;
+        int rootLevel;
+        V learnts;
+        Var lastDecisionUndone;
+        // --- Decision level
+        int *level;
+	\end{lstlisting}
+    \columnbreak
+    To implement the Solver in the C programming language, additional data-structures had to be implemented. Along the code, V refers to a Vector, Q to a Queue, bool to booleans, C to Clauses and Var to variables. A \textsc{cnf} formula, for instance, is represented as a vector of clauses, where each clause has variables.\\
+    Additionally, separate arrays are used to keep track of assignment values, trails of assignments, activities of variables, reasons for assignments and so on. This separate data-structures consume extra space, but allow a more efficient code. \\
+    \end{multicols}
+    
+    \subsection{Inference}
+    The only inference mechanism used in our solver is Unit Propagation. When all literals of a clause except for one are set to false, the latter is set to true, which may cause other clauses to become unit. This mechanism continues until no more clauses are unit. (\textit{propagate()}) \\
+    To optimize this, we followed the approach taken by \textsc{Chaff}\footnote{Matthew W. Moskewicz, Conor F. Madigan, Ying Zhao, Lintao Zhang, and Sharad Malik. Chaff: engineering an efficient SAT solver. In Design Automation Conference (DAC 2001)}. For each literal, a vector of clauses that may propagate unit information is kept. In each of those clauses, two unbound literals, \textit{p} and \textit{q} are kept: If both are unbound, then the clause is not unit. If one of them is unbound, we propagate through the remaining literals of the clause to pick another unbound one. If we cannot find it, it means the clause is now unit. This mechanism is commonly referred to as \textit{watch literals}. Because with a regular input the solver spends most of it's time propagating information, implementing \textit{watch literals} was an important choice for efficiency. \\
+    
+    \subsection{Learning and Backtracking}
+    The learning and backtracking implemented in the solver is an implementation of the one presented in \textsc{Grasp}\footnote{João P. Marques Silva, Karem A. Sakallah. GRASP—-a new search algorithm for satisfiability. International Conference on Computer-Aided Design (DAC 1996)}, (\textit{analyze()} and \textit{learn()}). When a clause is impossible to satisfy under the assignments in course, we go through the clauses that were the reason to propagate to the conflict in a BFS manner. When we reach the lowest decision level for which the conflict clause is unit, the that conflict clause is added to the database and the assignments until that point are canceled (\textit{cancelUntil()}). This is commonly referred as \textit{non-chronological backtracking}. \\
+    
+    \subsection{Activity heuristics}
+    The heuristic implemented to decide new variables to assign is presented as it follows: An array, \textit{int* activity} is kept, and for each variable, indexed by id, the number of unsolved clauses where it appears is saved. This simple approach should helps slightly improve the quality of the decisions. Unfortunately, due to time constraints, we weren't able to implement this carefully (maintain a queue where the next variable to chose is the one to be assigned, and update the queue for every propagation). The cost of maintaining the information turned out to be to too large, and the heuristic decreased the performance of the solver. For this reason, the delivered version has the heuristic commented, but selects variables only by ascending id order. \\
+    
+    \section{Difficulties and next steps}
+    Due to time constraints, the performance of the solver is still sub-optimal. For large enough inputs, the result is not given in a reasonable amount of time. Possible improvements are a careful implementation of the DLIS heuristic, learned clauses removal and migrating data structures from the heap to the stack. \\
+    Implementing in the C programming language also caused more time to be spent implementing data structures and solving memory issues. In the following section we present the methods we used to test our code. \\
+    
+    \section{Testing}
+    We ran Asan, Msan and UBSan, as well as Valgrind to guarantee the healthness of the solver's code. Although some memory leaks currently exists, those are cleaned when the process closes. We are able to catch some overflows and debug them with these tools. \\
+    
+    \section{Branches}
+    \subsection{Funcerr}
+    Heuristic < instead of <=.
+    \subsection{Undef}
+    use after free?
+    
+    
+\end{document}
