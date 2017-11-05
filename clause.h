@@ -19,11 +19,7 @@ bool CLAUSEnew(V literals, bool learnt, C *output);
 
 void CLAUSEremoveDuplicates(V literals);
 
-V CLAUSEdeepCopy(V clause);
-
 bool CLAUSEpropagate(C clause, Var p);
-
-void addToWatchersOf(C clause, Var p);
 
 V CLAUSEreasonFor(C clause, Var p);
 

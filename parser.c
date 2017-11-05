@@ -2,16 +2,18 @@
 #include "debugPrinter.h"
 
 void badFormatted(char *message, char *details) {
-    printf("ERROR: the file is badly formatted. %s%s<\n", message, details);
+    printf("ERROR: the file is badly formatted. %s%s\n", message, details);
     exit(EXIT_FAILURE);
 }
 
 int isSeparator(int character) {
-    if (isspace(character))
-        return 1;
     if (character == '\n')
         return 1;
     if (character == '\t')
+        return 1;
+    if (isspace(character))
+        return 1;
+    if (character == '\r')
         return 1;
     if (character == EOF)
         return 1;
@@ -50,7 +52,6 @@ void checkStartSequence(FILE *inputFile) {
             }
         }
     } while (*fileStart);
-
 }
 
 void readUntilSpace(FILE *inputFile, int *lastReadChar, char *readNumberChars) {
@@ -65,10 +66,15 @@ void readUntilSpace(FILE *inputFile, int *lastReadChar, char *readNumberChars) {
         i++;
     } while (i < MAX_NUMBER_LENGTH && !isSeparator(readChar));
 
+    //while(isSeparator(readChar, inputFile)) {
+    //    readChar = fgetc(inputFile);
+    //}
+
+    *lastReadChar = readChar;
+    
     if (i >= MAX_NUMBER_LENGTH)
         badFormatted("This parser only accepts numbers of length in characters up to: ", MAX_NUMBER_LENGTH_C);
 
-    *lastReadChar = readChar;
 }
 
 int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
@@ -77,8 +83,13 @@ int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
 
     readUntilSpace(inputFile, lastReadChar, readNumberChars);
 
-    readNumber = strtol(readNumberChars, NULL, 0);
+    if(*lastReadChar == 13) {
+        fgetc(inputFile);
+    }
 
+    readNumber = strtol(readNumberChars, NULL, 0);
+    printDebugInt("Read number was: ", readNumber); 
+   
     /* Will fail at this point if
      *    strtol failed
      *    strtol did not attempt (this would not trigger a strtol fail)
@@ -86,6 +97,7 @@ int readNumberUntilSpace(FILE *inputFile, int *lastReadChar) {
     if (readNumber == 0 && (errno == EINVAL || errno == ERANGE || !isdigit(readNumberChars[0])))
         badFormatted("Expected a number, read: ", readNumberChars);
 
+    free(readNumberChars);
     return readNumber;
 }
 
@@ -95,6 +107,7 @@ bool makeOutput(FILE *inputFile, V output) {
     C tempClause = NULL;
     int lastReadChar = 0;
     int readInt;
+    unsigned int maxLitEncountered = 0;
 
     for (unsigned int i = 0; i < numberOfClauses; i++) {
         literals = VECTORinit();
@@ -108,6 +121,8 @@ bool makeOutput(FILE *inputFile, V output) {
             if (readInt != 0) {
                 tempVar = VARinit((unsigned int) abs(readInt), readInt > 0);
                 VECTORadd(literals, tempVar);
+                if (maxLitEncountered < tempVar->id)
+                    maxLitEncountered = tempVar->id;
                 printDebug("added\n");
             }
 
@@ -136,6 +151,9 @@ bool makeOutput(FILE *inputFile, V output) {
         }
 
     }
+
+    if (maxLitEncountered != numberOfLiterals)
+        badFormatted("Not all the literals were encountered", "\n");
 
     if (lastReadChar != EOF)
         printDebugInt("WARNING: EOF not reached. Number of clauses parsed parsed correctly: ",

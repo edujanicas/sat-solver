@@ -1,21 +1,15 @@
 #include "clause.h"
 #include "sat.h"
 
-V CLAUSEdeepCopy(V clause) {
-    //TODO
-}
-
 bool CLAUSEnew(V literals, bool learnt, C *output) {
     if (!learnt) {
         if (CLAUSEclean(literals)) {
             printDebug("clause is already satisfied");
             return true;
         }
+
+        CLAUSEremoveDuplicates(literals);
     }
-
-    //TODO if both p and -p appear, return true
-
-    CLAUSEremoveDuplicates(literals);
 
     if (VECTORtotal(literals) == 0) {
         printDebug("clause is empty");
@@ -25,8 +19,6 @@ bool CLAUSEnew(V literals, bool learnt, C *output) {
     if (VECTORtotal(literals) == 1) {
         printDebug("enqueueing unit clause");
         enqueue((Var) VECTORget(literals, 0), NULL);
-        printDebugInt("assignment of ", ((Var) VECTORget(literals, 0))->id);
-        printDebugInt("is ", assignments[((Var) VECTORget(literals, 0))->id]);
     } else {
         printDebug("allocating clause");
         *output = malloc(sizeof(struct clause));
@@ -35,12 +27,20 @@ bool CLAUSEnew(V literals, bool learnt, C *output) {
         (*output)->activity = 0;
 
         if (learnt) {
-            //TODO: see SAT.pseudo
+            int maxLevelLiteralIndex = 0;
+            int maxLevel = 0;
+            for (unsigned int i = 0; i < VECTORtotal(literals); i++) {
+                if (level[((Var) VECTORget(literals, i))->id] > maxLevel) {
+                    maxLevel = level[((Var) VECTORget(literals, i))->id];
+                    maxLevelLiteralIndex = i;
+                }
+            }
+            VECTORswitchPlace(literals, 1, maxLevelLiteralIndex);
         }
 
         //adding to watchers of literals[0, 1]
-        addToWatchersOf(*output, ((Var) VECTORget(literals, 0)));
-        addToWatchersOf(*output, ((Var) VECTORget(literals, 1)));
+        addToWatchersOf(*output, neg((Var) VECTORget(literals, 0)));
+        addToWatchersOf(*output, neg((Var) VECTORget(literals, 1)));
     }
 
     return true;
@@ -60,6 +60,7 @@ bool CLAUSEclean(V literals) {
         }
     }
 
+    //TODO if both p and -p appear, return true
     return false;
 }
 
@@ -79,11 +80,14 @@ void CLAUSEremoveDuplicates(V literals) {
 bool CLAUSEpropagate(C clause, Var p) {
     //invariant: at the moment of the call the clause is not in watchers[p->id] anymore
 
+    printDebug("In CLAUSEpropagate of");
+    printClause(clause);
     Var negP = neg(p);
 
     //make sure -p is in literals[1]
     if (((Var) VECTORget(clause->literals, 0))->id == p->id &&
         ((Var) VECTORget(clause->literals, 0))->sign == negP->sign) {
+
         VECTORset(clause->literals, 0, VECTORget(clause->literals, 1));
         VECTORset(clause->literals, 1, neg(p));
     }
@@ -100,25 +104,26 @@ bool CLAUSEpropagate(C clause, Var p) {
     for (unsigned int i = 2; i < VECTORtotal(clause->literals); i++) {
         Var currentVar = VECTORget(clause->literals, i);
         if (value(currentVar) != false) {
-            VECTORset(clause->literals, i, currentVar);
+
+            VECTORset(clause->literals, 1, currentVar);
             VECTORset(clause->literals, i, neg(p));
-            addToWatchersOf(clause, currentVar);
+
+            addToWatchersOf(clause, neg(currentVar));
+
             return true;
         }
     }
 
     //if no watchable variable is found, clause is unit
+
     addToWatchersOf(clause, p);
     return enqueue(VECTORget(clause->literals, 0), clause);
 }
 
-void addToWatchersOf(C clause, Var p) {
-    VECTORadd(watchers[p->id], clause);
-}
 
 V CLAUSEreasonFor(C clause, Var p) {
     //ASSUMPTION: p is null or literals[0]
-    int i;
+    unsigned int i;
     V reasonForP = VECTORinit();
 
     if (p == NULL) {
@@ -130,4 +135,5 @@ V CLAUSEreasonFor(C clause, Var p) {
     for (; i < VECTORtotal(literals); i++) {
         VECTORadd(reasonForP, neg((Var) VECTORget(literals, i)));
     }
+    return reasonForP;
 }

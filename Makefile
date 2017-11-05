@@ -1,4 +1,4 @@
-CC=gcc
+CC=clang
 CFLAGS=-I. -Wall -Wextra -Wpedantic $(flags)
 
 DEPS = $(wildcard *.h)

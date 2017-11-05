@@ -1,7 +1,9 @@
 from __future__ import print_function
+
 import os
 import subprocess
 import sys
+
 
 def compare(formula):
     # Run minisat
@@ -21,6 +23,7 @@ def compare(formula):
         output = subprocess.check_output('./sat {}'.format(formula),
                                          shell=True)
     except subprocess.CalledProcessError as e:
+        print(e)
         output = e.output
 
     our_result = output.splitlines()[0]
