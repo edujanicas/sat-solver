@@ -6,7 +6,7 @@ void badFormatted(char *message, char *details) {
     exit(EXIT_FAILURE);
 }
 
-int isSeparator(int character, FILE *inputFile) {
+int isSeparator(int character) {
     if (character == '\n')
         return 1;
     if (character == '\t')
@@ -39,7 +39,7 @@ void checkStartSequence(FILE *inputFile) {
         } else {
             if (readChar == 'c') {
                 readChar = fgetc(inputFile);
-                if (isSeparator(readChar, inputFile)) {
+                if (isSeparator(readChar)) {
                     if (readChar != '\n')
                         skipLine(inputFile);
                     fileStart = "p cnf ";
@@ -64,7 +64,7 @@ void readUntilSpace(FILE *inputFile, int *lastReadChar, char *readNumberChars) {
         else
             *(readNumberChars + i) = (char) readChar;
         i++;
-    } while (i < MAX_NUMBER_LENGTH && !isSeparator(readChar, inputFile));
+    } while (i < MAX_NUMBER_LENGTH && !isSeparator(readChar));
 
     //while(isSeparator(readChar, inputFile)) {
     //    readChar = fgetc(inputFile);
@@ -126,7 +126,7 @@ bool makeOutput(FILE *inputFile, V output) {
                 printDebug("added\n");
             }
 
-            if (!isSeparator(lastReadChar, inputFile)) {
+            if (!isSeparator(lastReadChar)) {
                 badFormatted("", "");
             } else if (lastReadChar == EOF) {
                 if (i < numberOfClauses - 1) {
@@ -164,7 +164,7 @@ bool makeOutput(FILE *inputFile, V output) {
 int readHeaderParameter(FILE *inputFile) {
     int lastReadChar;
     int parameter = readNumberUntilSpace(inputFile, &lastReadChar);
-    if (!isSeparator(lastReadChar, inputFile))
+    if (!isSeparator(lastReadChar))
         badFormatted("", "");
     else if (lastReadChar == EOF)
         badFormatted("Could not find number of clauses parameter", "");

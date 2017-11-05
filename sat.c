@@ -58,15 +58,15 @@ void staticVarOrder() {
 
 unsigned int selectVar() {
 
-    int maxActivity = 0;
+    //int maxActivity = 0;
     unsigned int maxId = 0;
 
     for (unsigned int id = 1; id <= numberOfLiterals; id++) {
         if (assignments[id] == unassigned) {
-            if (maxActivity <= activity[id]) {
-                maxActivity = activity[id];
+            //if (maxActivity <= activity[id]) {
+                //maxActivity = activity[id];
                 return id;
-            }
+            //}
         }
     }
     return maxId;
@@ -134,7 +134,6 @@ C propagate() {
         else
             propagatingVarId = -propagatingVar->id;
 
-        //TODO does it work?
         watchers[propagatingVarId] = VECTORinit();
 
         for (unsigned int i = 0; i < numberOfWatchers; i++) {
@@ -167,9 +166,6 @@ void undoOne() {
     assignments[id] = unassigned;
     reason[id] = NULL;
     level[id] = -1;
-
-    //reset p in orders of variables
-    //unbind(p);
 
     VECTORpop(trail);
 }
@@ -244,7 +240,7 @@ int analyze(C conflictClause, V learntClauseLits) {
     bool seen[numberOfLiterals + 1];
 
     //first position will be set last
-    //VECTORadd(learntClauseLits, NULL);
+    VECTORadd(learntClauseLits, NULL);
 
     for (unsigned int i = 0; i <= numberOfLiterals; i++) {
         seen[i] = false;
@@ -268,7 +264,7 @@ int analyze(C conflictClause, V learntClauseLits) {
                 if (level[q->id] == currentDecisionLevel()) {
                     count++;
                 } else if (level[q->id] > 0) {
-                    //VECTORadd(learntClauseLits, neg(q));
+                    VECTORadd(learntClauseLits, neg(q));
                     backtrackLevel = max(backtrackLevel, level[q->id]);
                 }
             }
@@ -295,7 +291,7 @@ int analyze(C conflictClause, V learntClauseLits) {
 
     } while (count > 0 && VECTORtotal(trail) > trail_lim[trail_lim_size - 1]);
 
-    //VECTORset(learntClauseLits, 0, neg(p));
+    VECTORset(learntClauseLits, 0, neg(p));
 
     return backtrackLevel;
 }
@@ -305,7 +301,7 @@ int solve(V formula) {
     // Currently last assigned variable
     unsigned int varToDecide = 0;
     var_decay = VARDECAY;
-    staticVarOrder();
+    // staticVarOrder();
 
     while (true) {
         printFormula(formula);
@@ -346,7 +342,7 @@ int solve(V formula) {
 
             printDebug("Analyzed conflict");
 
-            //learn(learntClauseVars);
+            learn(learntClauseVars);
 
             printDebug("Learnt conflict clause");
 
