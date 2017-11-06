@@ -88,11 +88,21 @@
     Implementing in the C programming language also caused more time to be spent implementing data structures and solving memory issues. In the following section we present the methods we used to test our code. \\
     
     \section{Testing}
-    We ran Asan, Msan and UBSan, as well as Valgrind to guarantee the healthness of the solver's code. Although some memory leaks currently exists, those are cleaned when the process closes. We are able to catch some overflows and debug them with these tools. \\
+    We ran \textsc{Asan}, \textsc{Msan} and \textsc{UBSan}, as well as \textsc{Valgrind} to guarantee the healthiness of the solver's code. Although some memory leaks currently exists, those are cleaned when the process closes. \\
+    During the development processes, both \textsc{Asan} and \textsc{Valgrind} were able to catch some off-by-one overflows that didn't have a visible impact on the result produced by the solver in the test cases we ran. Nevertheless, it could happen that some input made use of that undefined behavior to produce wrong results. \\
+    Additionally, a script \textit{compare.py} was built to do differential testing between our SAT-solver and \textsc{minisat}. Assuming the correctness of \textsc{minisat}, our results were guaranteed to be correct if they pass through \textit{compare.py}.
     
     \section{Branches}
     \subsection{Funcerr}
-    Heuristic < instead of <=.
+    To create a functional error in the solver, the \textit{selectVar()} function looks like this:
+    \begin{lstlisting}
+    unsigned int selectVar() {  
+      for (unsigned int id = 1; id < numberOfLiterals; id++) 
+          if (assignments[id] == unassigned) return id;
+      return 0;
+  	}
+ 	\end{lstlisting}
+instead of iterating until \textit{id == numberOfLiterals}. Ultimately, if the value of the last variable was not propagated, it will return \textsc{Unsat}, as presented on test case \textit{funcerr.cnf}.
     \subsection{Undef}
     use after free?
     
