@@ -4,8 +4,6 @@ The undefined behaviour we added to our code is a buffer underflow. During confl
 
 The data structure containing the assigned literals in chronological order is a queue called trail, and the analyze function backtrack on this structure by iteratively calling the undoOne()function that in turns calls pop() on the trail. The undefined behaviour has been introduced by pretending we did not know that, and by adding an additional call to pop() on the trail near the call to undoOne(). In this way two elements are extracted by the trail.
 
-In the case of a top-level conflict, the underflow is avoided as the solver exits printing UNSAT before the analyze function can be called. As can be observed by the test case tests/unsat.cnf however, in a conflict as shallow as level 1 the trail underflows and the program terminates with a segmentation fault.
-
-Interestingly, in the case of a deeper conflict usually the trail is filled up enough for the program to avoid exhibiting the underflow. But extracting two 
+In the case of a top-level conflict, the underflow is avoided as the solver exits printing UNSAT before the analyze function can be called and, in the case of a deeper conflict, the trail is usually filled up enough to avoid the underflow. As can be observed by the test case tests/unsat.cnf however, in a conflict as shallow as level 1 the trail underflows and the program terminates with a segmentation fault.
 
 [1] L. Zhang, C.F. Madigan, M.W. Moskewicz, S. Malik. Efficent Conflict Driven Learning in Boolean Satisfiability Solver" in Proc. of the International Conference on Computer Aided Design (ICCAD) , 2001.
