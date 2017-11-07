@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include "debugPrinter.h"
 
-void printFormula(V formula) {/*
+void printFormula(V formula) {
     if (IS_DEBUG) {
         printf("Printing %d clauses\n", formula->total);
         for (unsigned int i = 0; i < VECTORtotal(formula); i++) {
             C clause = VECTORget(formula, i);
             printClause(clause);
         }
-    }*/
+    }
 }
 
-void printClause(C clause) {/*
+void printClause(C clause) {
     if (IS_DEBUG) {
         if (clause->learnt == true)
             printf("[L]  ");
@@ -30,7 +30,7 @@ void printClause(C clause) {/*
         }
         printf("\n");
         printf("\n");
-    }*/
+    }
 }
 
 void printDebugInt(char *message, int value) {

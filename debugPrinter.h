@@ -6,7 +6,7 @@
 #include "clause.h"
 #include "sat.h"
 
-#define IS_DEBUG 1
+#define IS_DEBUG 0
 
 void printDebugInt(char *message, int value);
 
