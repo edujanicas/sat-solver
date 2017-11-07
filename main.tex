@@ -127,7 +127,7 @@ In order to create a functional error in the solver, the \texttt{selectVar()} fu
 
 The modified version iterates while \texttt{id < numberOfLiterals} instead of \texttt{id <= numberOfLiterals}. Ultimately, if the value of the last variable was not propagated, the solver would return \textsc{Unsat}, as demonstrated through the test case \texttt{funcerr.cnf}.
     
-\section{UBerr}
+\section{Undef}
 The undefined behaviour we added to our code is related to a buffer underflow. During conflict analysis, the \texttt{analyze} function backtracks, undoing the last decisions and expanding the reasoning for them. This leads to the creation of a conflict clause. The process goes on until there is just one unexpanded literal in the current decision level. This heuristic is called \textit{First Unique Implication Point} and has been shown to be effective\footnote{L. Zhang, C.F. Madigan, M.W. Moskewicz, S. Malik. Efficent Conflict Driven Learning in Boolean Satisfiability Solver" in Proc. of the International Conference on Computer Aided Design (ICCAD), 2001}.
 
 The data structure containing the assigned literals in a chronological order is a queue called \texttt{trail}. The \texttt{analyze} function backtracks on this structure by iteratively calling the \texttt{undoOne}function which in turns calls \texttt{pop} on the trail.
