@@ -185,7 +185,6 @@ void cancel() {
     printDebugInt("--------- Deleting level: ", currentDecisionLevel());
     printDebugInt("Trail size: ", VECTORtotal(trail));
     printDebugInt("Level to be deleted first trail address: ", trail_lim[trail_lim_size - 1]);
-    printDebugInt("Previous level first trail address: ", trail_lim[trail_lim_size - 2]);
 
     unsigned int c = VECTORtotal(trail) - trail_lim[--trail_lim_size];
     printDebugInt("Reducing trail of: ", c);
@@ -237,6 +236,7 @@ void learn(V learntClauseVars) {
     if (clause != NULL) {
         enqueue(VECTORget(clause->literals, 0), clause);
         VECTORadd(learnts, clause);
+        printClause(clause);
     }
 }
 
@@ -349,14 +349,14 @@ int solve(V formula) {
             int backtrackTo = analyze(conflictingClause, learntClauseVars);
 
             printDebug("Analyzed conflict");
+            
+            printDebugInt("Backtracking until: ", max(backtrackTo, rootLevel));
+
+            cancelUntil(max(backtrackTo, rootLevel));
 
             learn(learntClauseVars);
 
             printDebug("Learnt conflict clause");
-
-            printDebugInt("Backtracking until: ", max(backtrackTo, rootLevel));
-
-            cancelUntil(max(backtrackTo, rootLevel));
         }
     }
 }
