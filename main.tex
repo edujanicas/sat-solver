@@ -134,6 +134,6 @@ The data structure containing the assigned literals in a chronological order is 
 
 The undefined behaviour has been introduced by pretending we did not know that, hence by adding an additional call to \texttt{pop} on the trail near the call to \texttt{undoOne}. This means that two elements are extracted from the trail.
 
-In the case of a top-level conflict, the underflow is avoided as the solver exits printing \texttt{Unsat} before the \texttt{analyze} function can be called. In the case of a deeper conflict, the trail is usually filled up enough to avoid the underflow. However, as can be observed in the test case \texttt{tests/unsat.cnf}, in a level-1 conflict the trail underflows and the program terminates with a segmentation fault. 
+In the case of a top-level conflict, the underflow is avoided as the solver exits printing \texttt{Unsat} before the \texttt{analyze} function can be called. In the case of a deeper conflict, the trail is usually filled up enough to avoid the underflow. However, as can be observed in the test case \texttt{tests/unsat.cnf}, in a level-1 conflict the trail underflows and the program terminates with a segmentation fault. This fault is caught both by \textsc{ASan} and \textsc{UBSan}.
     
 \end{document}
