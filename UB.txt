@@ -1,0 +1,7 @@
+\section{Undefined behaviour branch}
+
+The undefined behaviour we added to our code is a buffer underflow. During conflict analysis, the analyze function backtracks the last decisions and expands the reasoning for them, building a conflict clause. The process goes on until there is just one unexpanded literal in the current decision level. This heuristic is called "First Unique Implication Point" and has been shown effective [1].
+
+The data structure containing the assigned literals in chronological order is a queue called trail. In the case of a top-level conflict, 
+
+[1] L. Zhang, C.F. Madigan, M.W. Moskewicz, S. Malik. Efficent Conflict Driven Learning in Boolean Satisfiability Solver" in Proc. of the International Conference on Computer Aided Design (ICCAD) , 2001.
